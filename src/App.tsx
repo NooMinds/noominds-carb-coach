@@ -313,7 +313,7 @@ const SessionLogger: React.FC<SessionLoggerProps> = ({ onAddSession, onBackToDas
 
 
 // ============================================================================
-// Progress Charts Component (FIXED)
+// Progress Charts Component (FIXED AND IMPROVED)
 // ============================================================================
 
 interface ProgressChartsProps {
@@ -322,12 +322,6 @@ interface ProgressChartsProps {
 }
 
 const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashboard }) => {
-  // DEBUGGING: Log the received sessions data every time the component renders.
-  // You can view this in your browser's developer console (F12).
-  useEffect(() => {
-    console.log("ProgressCharts received updated sessions:", sessions);
-  }, [sessions]);
-
   // Ensure sessions are sorted by date for a proper timeline
   const sortedSessions = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
@@ -360,36 +354,52 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
             <div className="card text-center"><p className="text-sm text-gray-500">Avg. Symptom Score</p><p className="text-3xl font-bold">{avgSymptoms}<span className="text-lg">/10</span></p></div>
           </div>
 
+          {/* Carb Intake Chart */}
           <div className="card">
-            <h3 className="font-semibold mb-4">Carb Intake Trend (g/hr)</h3>
-            {/* FIX: Add a key that changes when the data does, forcing a re-render */}
-            <div key={`carb-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
+            <h3 className="font-semibold mb-4 text-blue-700">Carb Intake Trend (g/hr)</h3>
+            <div key={`carb-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border relative">
               {sortedSessions.map(session => {
                 const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
                 const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
                 return (
                   <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
-                    <div className="w-4 bg-blue-500 rounded-t" style={{ height: barHeight }}></div>
+                    <div className="text-xs font-bold text-blue-600 mb-1">{carbRate.toFixed(0)}</div>
+                    <div className="w-6 bg-blue-500 rounded-t" style={{ height: barHeight }}></div>
                     <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                   </div>
                 );
               })}
             </div>
+            {/* Debug Table for Carbs */}
+            <div className="mt-4 text-xs text-gray-600">
+              <h4 className="font-semibold mb-1">Data Points:</h4>
+              <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (g/hr)</th></tr></thead>
+                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{s.date}</td><td className="p-1 border-b">{(s.duration > 0 ? s.carbs / (s.duration / 60) : 0).toFixed(1)}</td></tr>)}</tbody>
+              </table>
+            </div>
           </div>
 
+          {/* Symptom Severity Chart */}
           <div className="card">
-            <h3 className="font-semibold mb-4">GI Symptom Severity Trend (0-10)</h3>
-            {/* FIX: Add a key that changes when the data does, forcing a re-render */}
+            <h3 className="font-semibold mb-4 text-red-700">GI Symptom Severity Trend (0-10)</h3>
             <div key={`symptom-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
               {sortedSessions.map(session => {
                 const barHeight = `${(session.symptomSeverity / maxSymptomScore) * 100}%`;
                 return (
                   <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Symptom Score: ${session.symptomSeverity}/10 on ${session.date}`}>
-                    <div className="w-4 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
+                    <div className="text-xs font-bold text-red-600 mb-1">{session.symptomSeverity}/10</div>
+                    <div className="w-6 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
                     <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                   </div>
                 );
               })}
+            </div>
+             {/* Debug Table for Symptoms */}
+             <div className="mt-4 text-xs text-gray-600">
+              <h4 className="font-semibold mb-1">Data Points:</h4>
+              <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (Score)</th></tr></thead>
+                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{s.date}</td><td className="p-1 border-b">{s.symptomSeverity}</td></tr>)}</tbody>
+              </table>
             </div>
           </div>
 
