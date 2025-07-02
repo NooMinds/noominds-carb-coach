@@ -322,6 +322,12 @@ interface ProgressChartsProps {
 }
 
 const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashboard }) => {
+  // DEBUGGING: Log the received sessions data every time the component renders.
+  // You can view this in your browser's developer console (F12).
+  useEffect(() => {
+    console.log("ProgressCharts received updated sessions:", sessions);
+  }, [sessions]);
+
   // Ensure sessions are sorted by date for a proper timeline
   const sortedSessions = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
@@ -356,7 +362,8 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
 
           <div className="card">
             <h3 className="font-semibold mb-4">Carb Intake Trend (g/hr)</h3>
-            <div className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
+            {/* FIX: Add a key that changes when the data does, forcing a re-render */}
+            <div key={`carb-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
               {sortedSessions.map(session => {
                 const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
                 const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
@@ -372,7 +379,8 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
 
           <div className="card">
             <h3 className="font-semibold mb-4">GI Symptom Severity Trend (0-10)</h3>
-            <div className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
+            {/* FIX: Add a key that changes when the data does, forcing a re-render */}
+            <div key={`symptom-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
               {sortedSessions.map(session => {
                 const barHeight = `${(session.symptomSeverity / maxSymptomScore) * 100}%`;
                 return (
