@@ -313,7 +313,7 @@ const SessionLogger: React.FC<SessionLoggerProps> = ({ onAddSession, onBackToDas
 
 
 // ============================================================================
-// Progress Charts Component
+// Progress Charts Component (FIXED)
 // ============================================================================
 
 interface ProgressChartsProps {
@@ -322,12 +322,22 @@ interface ProgressChartsProps {
 }
 
 const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashboard }) => {
-  const totalSessions = sessions.length;
-  const avgCarbs = totalSessions > 0 ? (sessions.reduce((sum, s) => sum + (s.carbs / (s.duration / 60)), 0) / totalSessions).toFixed(1) : 0;
-  const avgSymptoms = totalSessions > 0 ? (sessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / totalSessions).toFixed(1) : 0;
+  // Ensure sessions are sorted by date for a proper timeline
+  const sortedSessions = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   
-  const maxCarbs = Math.max(...sessions.map(s => s.carbs / (s.duration / 60)), 90);
-  const maxSymptoms = 10;
+  const totalSessions = sortedSessions.length;
+  
+  // Calculate averages safely, avoiding division by zero
+  const avgCarbs = totalSessions > 0 ? (sortedSessions.reduce((sum, s) => {
+    const carbRate = s.duration > 0 ? s.carbs / (s.duration / 60) : 0;
+    return sum + carbRate;
+  }, 0) / totalSessions).toFixed(1) : 0;
+  
+  const avgSymptoms = totalSessions > 0 ? (sortedSessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / totalSessions).toFixed(1) : 0;
+  
+  // Determine the maximum value for chart scaling. Use a sensible default if no sessions.
+  const maxCarbRate = sortedSessions.length > 0 ? Math.max(...sortedSessions.map(s => s.duration > 0 ? s.carbs / (s.duration / 60) : 0), 90) : 90;
+  const maxSymptomScore = 10;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
@@ -347,13 +357,13 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
           <div className="card">
             <h3 className="font-semibold mb-4">Carb Intake Trend (g/hr)</h3>
             <div className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
-              {sessions.map(session => {
-                const carbRate = session.carbs / (session.duration / 60);
-                const barHeight = `${(carbRate / maxCarbs) * 100}%`;
+              {sortedSessions.map(session => {
+                const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
+                const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
                 return (
-                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`${carbRate.toFixed(0)} g/hr on ${session.date}`}>
+                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
                     <div className="w-4 bg-blue-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{new Date(session.date).getDate()}</div>
+                    <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                   </div>
                 );
               })}
@@ -361,14 +371,14 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
           </div>
 
           <div className="card">
-            <h3 className="font-semibold mb-4">GI Symptom Severity Trend</h3>
+            <h3 className="font-semibold mb-4">GI Symptom Severity Trend (0-10)</h3>
             <div className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
-              {sessions.map(session => {
-                const barHeight = `${(session.symptomSeverity / maxSymptoms) * 100}%`;
+              {sortedSessions.map(session => {
+                const barHeight = `${(session.symptomSeverity / maxSymptomScore) * 100}%`;
                 return (
-                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Score ${session.symptomSeverity}/10 on ${session.date}`}>
+                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Symptom Score: ${session.symptomSeverity}/10 on ${session.date}`}>
                     <div className="w-4 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{new Date(session.date).getDate()}</div>
+                    <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                   </div>
                 );
               })}
