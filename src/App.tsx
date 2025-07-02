@@ -5,6 +5,10 @@ import './index.css'; // Make sure our styles are imported
 // Type Definitions
 // ============================================================================
 
+// Utility: consistent short-date formatter (e.g., “Jun 20”)
+const formatShortDate = (isoDate: string) =>
+  new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
 interface Session {
   id: string;
   date: string;
@@ -365,7 +369,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
                   <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
                     <div className="text-xs font-bold text-blue-600 mb-1">{carbRate.toFixed(0)}</div>
                     <div className="w-6 bg-blue-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                    <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
                   </div>
                 );
               })}
@@ -374,7 +378,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
             <div className="mt-4 text-xs text-gray-600">
               <h4 className="font-semibold mb-1">Data Points:</h4>
               <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (g/hr)</th></tr></thead>
-                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{s.date}</td><td className="p-1 border-b">{(s.duration > 0 ? s.carbs / (s.duration / 60) : 0).toFixed(1)}</td></tr>)}</tbody>
+                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{(s.duration > 0 ? s.carbs / (s.duration / 60) : 0).toFixed(1)}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
@@ -389,7 +393,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
                   <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Symptom Score: ${session.symptomSeverity}/10 on ${session.date}`}>
                     <div className="text-xs font-bold text-red-600 mb-1">{session.symptomSeverity}/10</div>
                     <div className="w-6 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                    <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
                   </div>
                 );
               })}
@@ -398,7 +402,7 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
              <div className="mt-4 text-xs text-gray-600">
               <h4 className="font-semibold mb-1">Data Points:</h4>
               <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (Score)</th></tr></thead>
-                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{s.date}</td><td className="p-1 border-b">{s.symptomSeverity}</td></tr>)}</tbody>
+                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{s.symptomSeverity}</td></tr>)}</tbody>
               </table>
             </div>
           </div>
