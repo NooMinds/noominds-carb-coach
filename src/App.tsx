@@ -5,7 +5,7 @@ import './index.css'; // Make sure our styles are imported
 // Type Definitions
 // ============================================================================
 
-// Utility: consistent short-date formatter (e.g., "Jun 20")
+// Utility: consistent short-date formatter (e.g., “Jun 20”)
 const formatShortDate = (isoDate: string) =>
   new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
