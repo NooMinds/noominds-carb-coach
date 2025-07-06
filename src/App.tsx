@@ -1,11 +1,11 @@
-import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
 import './index.css'; // Make sure our styles are imported
 
 // ============================================================================
 // Type Definitions
 // ============================================================================
 
-// Utility: consistent short-date formatter (e.g., “Jun 20”)
+// Utility: consistent short-date formatter (e.g., "Jun 20")
 const formatShortDate = (isoDate: string) =>
   new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -23,7 +23,14 @@ interface Session {
   notes: string;
 }
 
-type AppView = 'dashboard' | 'assessment' | 'logger' | 'progress';
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: string;
+}
+
+type AppView = 'dashboard' | 'assessment' | 'logger' | 'progress' | 'ai_coach';
 
 // ============================================================================
 // Mock Data & LocalStorage Hook
@@ -122,6 +129,9 @@ function App() {
     case 'progress':
       viewComponent = <ProgressCharts sessions={sessions} onBackToDashboard={() => navigateTo('dashboard')} />;
       break;
+    case 'ai_coach':
+      viewComponent = <AICoach sessions={sessions} onBackToDashboard={() => navigateTo('dashboard')} />;
+      break;
     case 'dashboard':
     default:
       viewComponent = <Dashboard onNavigate={navigateTo} sessionsCount={sessions.length} />;
@@ -176,21 +186,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
 
         <div>
           <h2 className="text-xl font-semibold mb-4 text-slate-700">Get Started</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="card flex flex-col items-center text-center">
               <h3 className="font-semibold mb-2">1. Start Your Assessment</h3>
-              <p className="text-sm text-slate-600 flex-grow mb-4">Generate your personalized gut training plan with our AI-powered assessment.</p>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Generate your personalized gut training plan.</p>
               <button onClick={() => onNavigate('assessment')} className="btn btn-primary w-full">Start Assessment</button>
             </div>
             <div className="card flex flex-col items-center text-center">
               <h3 className="font-semibold mb-2">2. Log a Training Session</h3>
-              <p className="text-sm text-slate-600 flex-grow mb-4">Track your nutrition, symptoms, and performance for each workout.</p>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Track your nutrition, symptoms, and performance.</p>
               <button onClick={() => onNavigate('logger')} className="btn btn-outline w-full">Log Session</button>
             </div>
             <div className="card flex flex-col items-center text-center">
               <h3 className="font-semibold mb-2">3. View Your Progress</h3>
-              <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time with our detailed charts.</p>
+              <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time.</p>
               <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
+            </div>
+            <div className="card flex flex-col items-center text-center bg-teal-50 border-teal-200">
+              <h3 className="font-semibold mb-2 text-teal-800">4. Talk to AI Coach</h3>
+              <p className="text-sm text-teal-700 flex-grow mb-4">Get real-time guidance and answers from your AI coach.</p>
+              <button onClick={() => onNavigate('ai_coach')} className="btn btn-primary w-full">Ask Coach Noo</button>
             </div>
           </div>
         </div>
@@ -198,6 +213,206 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
     </div>
   );
 };
+
+// ============================================================================
+// AI Chat Coach Component
+// ============================================================================
+
+interface AICoachProps {
+  sessions: Session[];
+  onBackToDashboard: () => void;
+}
+
+const AICoach: React.FC<AICoachProps> = ({ sessions, onBackToDashboard }) => {
+  const [messages, setMessages] = useLocalStorage<Message[]>('noominds-chat-history', []);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(scrollToBottom, [messages]);
+  
+  useEffect(() => {
+    if (messages.length === 0) {
+      // Initial welcome message if chat history is empty
+      const welcomeMessage: Message = {
+        id: 'welcome',
+        text: "Hi Craig! I'm Coach Noo, your AI gut training assistant. I have access to your training data. How can I help you today?",
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages([welcomeMessage]);
+    }
+  }, []);
+
+  const getAIResponse = async (userInput: string, userSessions: Session[]): Promise<string> => {
+    const lastSession = userSessions.length > 0 ? userSessions[userSessions.length - 1] : null;
+    const lowerCaseInput = userInput.toLowerCase();
+
+    // --- Placeholder for real OpenAI API call ---
+    /*
+    const OPENAI_API_KEY = 'YOUR_API_KEY_HERE'; // <-- IMPORTANT: Replace with your actual key
+    const prompt = `
+      You are Coach Noo, an expert sports nutrition AI for endurance athletes.
+      Your user, Craig, has provided the following question: "${userInput}"
+      
+      Here is his recent training data for context:
+      ${JSON.stringify(userSessions, null, 2)}
+      
+      Provide a helpful, concise, and encouraging response.
+    `;
+
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4-turbo',
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error("Error calling OpenAI API:", error);
+      return "I'm having trouble connecting to my brain right now. Please try again later.";
+    }
+    */
+    // --- End of placeholder ---
+
+    // --- Simulated AI Response Logic (for demonstration) ---
+    if (lowerCaseInput.includes("analyze") && lowerCaseInput.includes("last session")) {
+      if (lastSession) {
+        const carbRate = lastSession.duration > 0 ? (lastSession.carbs / (lastSession.duration / 60)).toFixed(0) : 'N/A';
+        return `Of course! Looking at your last session on ${formatShortDate(lastSession.date)}:
+- Sport: ${lastSession.sport}
+- Duration: ${lastSession.duration} mins
+- Carb Rate: ~${carbRate} g/hr
+- Symptom Score: ${lastSession.symptomSeverity}/10
+Your notes say: "${lastSession.notes}"
+This looks like a solid session. The carb rate was good, and symptoms were manageable. How did your energy levels feel towards the end?`;
+      }
+      return "You haven't logged any sessions yet. Log a session, and I'll be happy to analyze it!";
+    }
+
+    if (lowerCaseInput.includes("bloated") || lowerCaseInput.includes("cramps")) {
+      return "Bloating and cramps are common when increasing carb intake. Here are a few things to try:\n1. **Split your intake**: Instead of one gel, try half a gel every 20 minutes.\n2. **Check your drink concentration**: If it's too high in carbs, it can slow stomach emptying. Try diluting it slightly.\n3. **Consider the type**: Some people tolerate maltodextrin/glucose better than fructose. What products are you using?";
+    }
+
+    if (lowerCaseInput.includes("target") || lowerCaseInput.includes("next goal")) {
+      const currentAvg = sessions.length > 0 ? (sessions.reduce((sum, s) => sum + (s.duration > 0 ? s.carbs / (s.duration / 60) : 0), 0) / sessions.length).toFixed(0) : 45;
+      return `Your current average is around ${currentAvg} g/hr. A good next step would be to target about ${Number(currentAvg) + 5} g/hr in your next long session. Remember to increase gradually!`;
+    }
+
+    if (lowerCaseInput.includes("how much") && lowerCaseInput.includes("drink")) {
+      return "A general guideline for hydration during endurance exercise is 400-800ml per hour, depending on sweat rate, temperature, and intensity. It's important to sip regularly rather than chugging large amounts at once. Are you also taking in electrolytes?";
+    }
+
+    return "That's a great question. While I'm still in training, a sports nutritionist could give you the best advice on that. For general queries, you can ask me about your last session or your next target.";
+  };
+
+  const handleSend = async (messageText?: string) => {
+    const text = messageText || input;
+    if (!text.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text,
+      sender: 'user',
+      timestamp: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsTyping(true);
+
+    const aiResponseText = await getAIResponse(text, sessions);
+    
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponseText,
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 1200); // Simulate thinking time
+  };
+
+  const suggestionPrompts = [
+    "Analyze my last session",
+    "What's my next carb target?",
+    "What should I do if I feel bloated?",
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">AI Chat Coach</h1>
+        <p className="mt-2 text-lg text-slate-600">Ask "Coach Noo" anything about your gut training journey.</p>
+      </header>
+
+      <div className="card h-[70vh] flex flex-col">
+        {/* Message Display Area */}
+        <div className="flex-grow overflow-y-auto pr-4 -mr-4 space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+              {msg.sender === 'ai' && <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">AI</div>}
+              <div className={`max-w-md p-3 rounded-lg ${msg.sender === 'user' ? 'bg-teal-500 text-white' : 'bg-slate-100'}`}>
+                <p className="text-sm">{msg.text}</p>
+                <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">CE</div>}
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex items-end gap-2">
+              <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">AI</div>
+              <div className="max-w-md p-3 rounded-lg bg-slate-100">
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Area */}
+        <div className="pt-4 mt-4 border-t">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {suggestionPrompts.map(prompt => (
+              <button key={prompt} onClick={() => handleSend(prompt)} className="btn btn-outline text-xs !py-1 !px-2">{prompt}</button>
+            ))}
+          </div>
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a question..."
+              className="form-input flex-grow"
+              disabled={isTyping}
+            />
+            <button type="submit" className="btn btn-primary" disabled={isTyping || !input.trim()}>Send</button>
+          </form>
+        </div>
+      </div>
+       <div className="text-center mt-6">
+        <button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button>
+      </div>
+    </div>
+  );
+};
+
 
 // ============================================================================
 // Assessment Form Component (from previous step)
