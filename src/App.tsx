@@ -161,7 +161,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-slate-900">Your Dashboard</h1>
+        <h1 className="text-slate-900">NooMinds Focus, Energy, Performance</h1>
         <p className="mt-2 text-lg text-slate-600">
           Welcome back, <span className="font-bold" style={{color: '#EF6A3E'}}>Craig Elliott</span>! Let's optimize your fueling.
         </p>
