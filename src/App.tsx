@@ -61,6 +61,41 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
   return [storedValue, setValue];
 }
 
+// ============================================================================
+// Branding & Layout Components
+// ============================================================================
+
+const Header: React.FC = () => (
+  <header className="bg-slate-800 text-white shadow-md">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div className="flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-teal-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10c0 4.42 2.87 8.17 6.84 9.5.6.11.82-.26.82-.57v-2.03c-2.78.6-3.37-1.34-3.37-1.34-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.08-.73.08-.73 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.95-.26 1.98-.4 3-.4s2.05.13 3 .4c2.28-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .31.22.69.82.57A10 10 0 0 0 22 12 10 10 0 0 0 12 2z" /></svg>
+        <span className="text-2xl font-bold">NooMinds</span>
+      </div>
+      <p className="hidden sm:block text-sm text-slate-300">Fuel Smarter. Perform Better.</p>
+    </div>
+  </header>
+);
+
+const Footer: React.FC = () => (
+  <footer className="bg-slate-800 text-slate-400 text-xs text-center py-4 mt-12">
+    <p>&copy; {new Date().getFullYear()} NooMinds Ltd. All Rights Reserved.</p>
+    <a href="https://www.noominds.com" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">
+      www.noominds.com
+    </a>
+  </footer>
+);
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="min-h-screen bg-slate-50">
+    <Header />
+    <main className="p-4 sm:p-6 lg:p-8">
+      {children}
+    </main>
+    <Footer />
+  </div>
+);
+
 
 // ============================================================================
 // Main App Component (View Controller)
@@ -76,17 +111,24 @@ function App() {
 
   const navigateTo = (view: AppView) => setCurrentView(view);
 
+  let viewComponent;
   switch (currentView) {
     case 'assessment':
-      return <AssessmentForm onBackToDashboard={() => navigateTo('dashboard')} />;
+      viewComponent = <AssessmentForm onBackToDashboard={() => navigateTo('dashboard')} />;
+      break;
     case 'logger':
-      return <SessionLogger onAddSession={addSession} onBackToDashboard={() => navigateTo('dashboard')} />;
+      viewComponent = <SessionLogger onAddSession={addSession} onBackToDashboard={() => navigateTo('dashboard')} />;
+      break;
     case 'progress':
-      return <ProgressCharts sessions={sessions} onBackToDashboard={() => navigateTo('dashboard')} />;
+      viewComponent = <ProgressCharts sessions={sessions} onBackToDashboard={() => navigateTo('dashboard')} />;
+      break;
     case 'dashboard':
     default:
-      return <Dashboard onNavigate={navigateTo} sessionsCount={sessions.length} />;
+      viewComponent = <Dashboard onNavigate={navigateTo} sessionsCount={sessions.length} />;
+      break;
   }
+
+  return <Layout>{viewComponent}</Layout>;
 }
 
 // ============================================================================
@@ -105,55 +147,53 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-blue-600">NooMinds Carb Coach</h1>
-          <p className="mt-2 text-lg text-gray-600">
-            Welcome back, <span className="font-bold">Craig Elliott</span>! Let's optimize your fueling.
-          </p>
-        </header>
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Your Dashboard</h1>
+        <p className="mt-2 text-lg text-slate-600">
+          Welcome back, <span className="font-bold text-teal-600">Craig Elliott</span>! Let's optimize your fueling.
+        </p>
+      </header>
 
-        <main className="space-y-8">
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Your Weekly Snapshot</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="card text-center">
-                <p className="text-sm text-gray-500">Current Carb Intake</p>
-                <p className="text-3xl font-bold text-gray-800">{stats.currentCarbIntake}<span className="text-lg font-medium">g/hr</span></p>
-              </div>
-              <div className="card text-center">
-                <p className="text-sm text-gray-500">Target Carb Intake</p>
-                <p className="text-3xl font-bold text-blue-600">{stats.targetCarbIntake}<span className="text-lg font-medium">g/hr</span></p>
-              </div>
-              <div className="card text-center">
-                <p className="text-sm text-gray-500">Sessions Logged</p>
-                <p className="text-3xl font-bold text-gray-800">{sessionsCount}</p>
-              </div>
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-slate-700">Your Weekly Snapshot</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="card text-center">
+              <p className="text-sm text-slate-500">Current Carb Intake</p>
+              <p className="text-3xl font-bold text-slate-800">{stats.currentCarbIntake}<span className="text-lg font-medium text-slate-500">g/hr</span></p>
+            </div>
+            <div className="card text-center">
+              <p className="text-sm text-slate-500">Target Carb Intake</p>
+              <p className="text-3xl font-bold text-teal-600">{stats.targetCarbIntake}<span className="text-lg font-medium text-slate-500">g/hr</span></p>
+            </div>
+            <div className="card text-center">
+              <p className="text-sm text-slate-500">Sessions Logged</p>
+              <p className="text-3xl font-bold text-slate-800">{sessionsCount}</p>
             </div>
           </div>
+        </div>
 
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Get Started</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="card flex flex-col items-center text-center">
-                <h3 className="font-semibold mb-2">1. Start Your Assessment</h3>
-                <p className="text-sm text-gray-600 flex-grow mb-4">Generate your personalized gut training plan with our AI-powered assessment.</p>
-                <button onClick={() => onNavigate('assessment')} className="btn btn-primary w-full">Start Assessment</button>
-              </div>
-              <div className="card flex flex-col items-center text-center">
-                <h3 className="font-semibold mb-2">2. Log a Training Session</h3>
-                <p className="text-sm text-gray-600 flex-grow mb-4">Track your nutrition, symptoms, and performance for each workout.</p>
-                <button onClick={() => onNavigate('logger')} className="btn btn-outline w-full">Log Session</button>
-              </div>
-              <div className="card flex flex-col items-center text-center">
-                <h3 className="font-semibold mb-2">3. View Your Progress</h3>
-                <p className="text-sm text-gray-600 flex-grow mb-4">See how your carb tolerance improves over time with our detailed charts.</p>
-                <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
-              </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-slate-700">Get Started</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="card flex flex-col items-center text-center">
+              <h3 className="font-semibold mb-2">1. Start Your Assessment</h3>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Generate your personalized gut training plan with our AI-powered assessment.</p>
+              <button onClick={() => onNavigate('assessment')} className="btn btn-primary w-full">Start Assessment</button>
+            </div>
+            <div className="card flex flex-col items-center text-center">
+              <h3 className="font-semibold mb-2">2. Log a Training Session</h3>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Track your nutrition, symptoms, and performance for each workout.</p>
+              <button onClick={() => onNavigate('logger')} className="btn btn-outline w-full">Log Session</button>
+            </div>
+            <div className="card flex flex-col items-center text-center">
+              <h3 className="font-semibold mb-2">3. View Your Progress</h3>
+              <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time with our detailed charts.</p>
+              <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
@@ -164,36 +204,30 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
 // ============================================================================
 
 const AssessmentForm: React.FC<{ onBackToDashboard: () => void; }> = ({ onBackToDashboard }) => {
-    // This is the full assessment form from the previous step.
-    // It is kept here for completeness of the single-file app.
     const [formData, setFormData] = useState({ name: 'Craig Elliott', primarySport: 'Cycling', weeklyVolume: '10', intensity: 'Moderate', currentCarbIntake: '45', fuelSources: ['Gels', 'Drinks'], hasGiSymptoms: true, symptomSeverity: '4', symptomTypes: ['Bloating'], targetCarbGoal: '90' });
     const [isSubmitted, setIsSubmitted] = useState(false);
     const handleSubmit = (e: FormEvent) => { e.preventDefault(); setIsSubmitted(true); };
 
     if (isSubmitted) {
         return (
-            <div className="min-h-screen bg-gray-100 p-8">
-                <div className="max-w-4xl mx-auto">
-                    <header className="mb-8 text-center"><h1 className="text-blue-600">Assessment Results Summary</h1></header>
-                    <div className="card"><p>Summary of results for {formData.name}...</p></div>
-                    <div className="text-center mt-6"><button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button></div>
-                </div>
+            <div className="max-w-4xl mx-auto">
+                <header className="mb-8 text-center"><h1 className="text-slate-900">Assessment Results Summary</h1></header>
+                <div className="card"><p>Summary of results for {formData.name}...</p></div>
+                <div className="text-center mt-6"><button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
-            <div className="max-w-4xl mx-auto">
-                <header className="mb-8"><h1 className="text-blue-600">Athlete Assessment Form</h1></header>
-                <form onSubmit={handleSubmit} className="card space-y-8">
-                    <p>Full assessment form fields would be here...</p>
-                    <div className="flex justify-between items-center pt-8 border-t">
-                        <button type="button" onClick={onBackToDashboard} className="btn btn-outline">Back to Dashboard</button>
-                        <button type="submit" className="btn btn-primary">Submit for Analysis</button>
-                    </div>
-                </form>
-            </div>
+        <div className="max-w-4xl mx-auto">
+            <header className="mb-8"><h1 className="text-slate-900">Athlete Assessment Form</h1></header>
+            <form onSubmit={handleSubmit} className="card space-y-8">
+                <p>Full assessment form fields would be here...</p>
+                <div className="flex justify-between items-center pt-8 border-t">
+                    <button type="button" onClick={onBackToDashboard} className="btn btn-outline">Back to Dashboard</button>
+                    <button type="submit" className="btn btn-primary">Submit for Analysis</button>
+                </div>
+            </form>
         </div>
     );
 };
@@ -260,57 +294,55 @@ const SessionLogger: React.FC<SessionLoggerProps> = ({ onAddSession, onBackToDas
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-blue-600">Log a Training Session</h1>
-          <p className="mt-2 text-lg text-gray-600">Track your fueling and symptoms to see your progress.</p>
-        </header>
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Log a Training Session</h1>
+        <p className="mt-2 text-lg text-slate-600">Track your fueling and symptoms to see your progress.</p>
+      </header>
 
-        <form onSubmit={handleSubmit} className="card space-y-8">
-          <fieldset>
-            <legend>1. Session Details</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className="form-label">Date</label><input type="date" name="date" value={formState.date} onChange={handleChange} className="form-input" /></div>
-              <div><label className="form-label">Sport</label><select name="sport" value={formState.sport} onChange={handleChange} className="form-select"><option>Cycling</option><option>Running</option><option>Triathlon</option><option>Other</option></select></div>
-              <div><label className="form-label">Duration (minutes)</label><input type="number" name="duration" value={formState.duration} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.duration}</p></div>
-              <div><label className="form-label">Intensity</label><select name="intensity" value={formState.intensity} onChange={handleChange} className="form-select"><option>Low</option><option>Moderate</option><option>High</option><option>Mixed</option></select></div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>2. Nutrition & Hydration</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className="form-label">Total Carbs Consumed (grams)</label><input type="number" name="carbs" value={formState.carbs} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.carbs}</p></div>
-              <div><label className="form-label">Total Fluids Consumed (ml)</label><input type="number" name="fluids" value={formState.fluids} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.fluids}</p></div>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend>3. GI Symptoms & Performance</legend>
-            <div><label className="form-label">Overall Symptom Severity (0=None, 10=Severe)</label><input type="range" min="0" max="10" name="symptomSeverity" value={formState.symptomSeverity} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-blue-600">{formState.symptomSeverity}</div></div>
-            <div>
-                <label className="form-label">Symptom Types</label>
-                <div className="flex flex-wrap gap-4 mt-2">
-                    {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea'].map(type => (
-                        <label key={type}><input type="checkbox" value={type} checked={formState.symptomTypes.includes(type)} onChange={handleSymptomChange} className="form-checkbox" /> {type}</label>
-                    ))}
-                </div>
-            </div>
-            <div><label className="form-label">Rate of Perceived Exertion (RPE, 1-10)</label><input type="range" min="1" max="10" name="rpe" value={formState.rpe} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-blue-600">{formState.rpe}</div></div>
-          </fieldset>
-
-          <fieldset>
-            <legend>4. Notes</legend>
-            <div><label className="form-label">Any other observations?</label><textarea name="notes" value={formState.notes} onChange={handleChange} className="form-input" rows={4} placeholder="e.g., What specific products did you use? How was your energy?" /></div>
-          </fieldset>
-          
-          <div className="flex justify-between items-center pt-8 border-t">
-            <button type="button" onClick={onBackToDashboard} className="btn btn-outline">Cancel</button>
-            <button type="submit" className="btn btn-primary">Log Session</button>
+      <form onSubmit={handleSubmit} className="card space-y-8">
+        <fieldset>
+          <legend>1. Session Details</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label className="form-label">Date</label><input type="date" name="date" value={formState.date} onChange={handleChange} className="form-input" /></div>
+            <div><label className="form-label">Sport</label><select name="sport" value={formState.sport} onChange={handleChange} className="form-select"><option>Cycling</option><option>Running</option><option>Triathlon</option><option>Other</option></select></div>
+            <div><label className="form-label">Duration (minutes)</label><input type="number" name="duration" value={formState.duration} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.duration}</p></div>
+            <div><label className="form-label">Intensity</label><select name="intensity" value={formState.intensity} onChange={handleChange} className="form-select"><option>Low</option><option>Moderate</option><option>High</option><option>Mixed</option></select></div>
           </div>
-        </form>
-      </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Nutrition & Hydration</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label className="form-label">Total Carbs Consumed (grams)</label><input type="number" name="carbs" value={formState.carbs} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.carbs}</p></div>
+            <div><label className="form-label">Total Fluids Consumed (ml)</label><input type="number" name="fluids" value={formState.fluids} onChange={handleChange} className="form-input" /><p className="text-red-500 text-xs">{errors.fluids}</p></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. GI Symptoms & Performance</legend>
+          <div><label className="form-label">Overall Symptom Severity (0=None, 10=Severe)</label><input type="range" min="0" max="10" name="symptomSeverity" value={formState.symptomSeverity} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-teal-600">{formState.symptomSeverity}</div></div>
+          <div>
+              <label className="form-label">Symptom Types</label>
+              <div className="flex flex-wrap gap-4 mt-2">
+                  {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea'].map(type => (
+                      <label key={type}><input type="checkbox" value={type} checked={formState.symptomTypes.includes(type)} onChange={handleSymptomChange} className="form-checkbox" /> {type}</label>
+                  ))}
+              </div>
+          </div>
+          <div><label className="form-label">Rate of Perceived Exertion (RPE, 1-10)</label><input type="range" min="1" max="10" name="rpe" value={formState.rpe} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-teal-600">{formState.rpe}</div></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>4. Notes</legend>
+          <div><label className="form-label">Any other observations?</label><textarea name="notes" value={formState.notes} onChange={handleChange} className="form-input" rows={4} placeholder="e.g., What specific products did you use? How was your energy?" /></div>
+        </fieldset>
+        
+        <div className="flex justify-between items-center pt-8 border-t">
+          <button type="button" onClick={onBackToDashboard} className="btn btn-outline">Cancel</button>
+          <button type="submit" className="btn btn-primary">Log Session</button>
+        </div>
+      </form>
     </div>
   );
 };
@@ -326,12 +358,9 @@ interface ProgressChartsProps {
 }
 
 const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashboard }) => {
-  // Ensure sessions are sorted by date for a proper timeline
   const sortedSessions = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  
   const totalSessions = sortedSessions.length;
   
-  // Calculate averages safely, avoiding division by zero
   const avgCarbs = totalSessions > 0 ? (sortedSessions.reduce((sum, s) => {
     const carbRate = s.duration > 0 ? s.carbs / (s.duration / 60) : 0;
     return sum + carbRate;
@@ -339,79 +368,74 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
   
   const avgSymptoms = totalSessions > 0 ? (sortedSessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / totalSessions).toFixed(1) : 0;
   
-  // Determine the maximum value for chart scaling. Use a sensible default if no sessions.
   const maxCarbRate = sortedSessions.length > 0 ? Math.max(...sortedSessions.map(s => s.duration > 0 ? s.carbs / (s.duration / 60) : 0), 90) : 90;
   const maxSymptomScore = 10;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-blue-600">Your Progress</h1>
-          <p className="mt-2 text-lg text-gray-600">Track your gut training journey and celebrate your milestones.</p>
-        </header>
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Your Progress</h1>
+        <p className="mt-2 text-lg text-slate-600">Track your gut training journey and celebrate your milestones.</p>
+      </header>
 
-        <main className="space-y-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="card text-center"><p className="text-sm text-gray-500">Total Sessions</p><p className="text-3xl font-bold">{totalSessions}</p></div>
-            <div className="card text-center"><p className="text-sm text-gray-500">Avg. Carb Rate</p><p className="text-3xl font-bold">{avgCarbs} <span className="text-lg">g/hr</span></p></div>
-            <div className="card text-center"><p className="text-sm text-gray-500">Avg. Symptom Score</p><p className="text-3xl font-bold">{avgSymptoms}<span className="text-lg">/10</span></p></div>
-          </div>
+      <main className="space-y-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="card text-center"><p className="text-sm text-slate-500">Total Sessions</p><p className="text-3xl font-bold">{totalSessions}</p></div>
+          <div className="card text-center"><p className="text-sm text-slate-500">Avg. Carb Rate</p><p className="text-3xl font-bold">{avgCarbs} <span className="text-lg">g/hr</span></p></div>
+          <div className="card text-center"><p className="text-sm text-slate-500">Avg. Symptom Score</p><p className="text-3xl font-bold">{avgSymptoms}<span className="text-lg">/10</span></p></div>
+        </div>
 
-          {/* Carb Intake Chart */}
-          <div className="card">
-            <h3 className="font-semibold mb-4 text-blue-700">Carb Intake Trend (g/hr)</h3>
-            <div key={`carb-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border relative">
-              {sortedSessions.map(session => {
-                const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
-                const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
-                return (
-                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
-                    <div className="text-xs font-bold text-blue-600 mb-1">{carbRate.toFixed(0)}</div>
-                    <div className="w-6 bg-blue-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
-                  </div>
-                );
-              })}
-            </div>
-            {/* Debug Table for Carbs */}
-            <div className="mt-4 text-xs text-gray-600">
-              <h4 className="font-semibold mb-1">Data Points:</h4>
-              <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (g/hr)</th></tr></thead>
-                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{(s.duration > 0 ? s.carbs / (s.duration / 60) : 0).toFixed(1)}</td></tr>)}</tbody>
-              </table>
-            </div>
+        {/* Carb Intake Chart */}
+        <div className="card">
+          <h3 className="font-semibold mb-4 text-teal-700">Carb Intake Trend (g/hr)</h3>
+          <div key={`carb-chart-${sessions.length}`} className="h-48 bg-slate-50 rounded p-2 flex items-end justify-around border relative">
+            {sortedSessions.map(session => {
+              const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
+              const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
+              return (
+                <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
+                  <div className="text-xs font-bold text-teal-600 mb-1">{carbRate.toFixed(0)}</div>
+                  <div className="w-6 bg-teal-500 rounded-t" style={{ height: barHeight }}></div>
+                  <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
+                </div>
+              );
+            })}
           </div>
+          <div className="mt-4 text-xs text-slate-600">
+            <h4 className="font-semibold mb-1">Data Points:</h4>
+            <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (g/hr)</th></tr></thead>
+              <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{(s.duration > 0 ? s.carbs / (s.duration / 60) : 0).toFixed(1)}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </div>
 
-          {/* Symptom Severity Chart */}
-          <div className="card">
-            <h3 className="font-semibold mb-4 text-red-700">GI Symptom Severity Trend (0-10)</h3>
-            <div key={`symptom-chart-${sessions.length}`} className="h-48 bg-gray-50 rounded p-2 flex items-end justify-around border">
-              {sortedSessions.map(session => {
-                const barHeight = `${(session.symptomSeverity / maxSymptomScore) * 100}%`;
-                return (
-                  <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Symptom Score: ${session.symptomSeverity}/10 on ${session.date}`}>
-                    <div className="text-xs font-bold text-red-600 mb-1">{session.symptomSeverity}/10</div>
-                    <div className="w-6 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
-                    <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
-                  </div>
-                );
-              })}
-            </div>
-             {/* Debug Table for Symptoms */}
-             <div className="mt-4 text-xs text-gray-600">
-              <h4 className="font-semibold mb-1">Data Points:</h4>
-              <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (Score)</th></tr></thead>
-                <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{s.symptomSeverity}</td></tr>)}</tbody>
-              </table>
-            </div>
+        {/* Symptom Severity Chart */}
+        <div className="card">
+          <h3 className="font-semibold mb-4 text-red-700">GI Symptom Severity Trend (0-10)</h3>
+          <div key={`symptom-chart-${sessions.length}`} className="h-48 bg-slate-50 rounded p-2 flex items-end justify-around border">
+            {sortedSessions.map(session => {
+              const barHeight = `${(session.symptomSeverity / maxSymptomScore) * 100}%`;
+              return (
+                <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Symptom Score: ${session.symptomSeverity}/10 on ${session.date}`}>
+                  <div className="text-xs font-bold text-red-600 mb-1">{session.symptomSeverity}/10</div>
+                  <div className="w-6 bg-red-500 rounded-t" style={{ height: barHeight }}></div>
+                  <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
+                </div>
+              );
+            })}
           </div>
+           <div className="mt-4 text-xs text-slate-600">
+            <h4 className="font-semibold mb-1">Data Points:</h4>
+            <table className="w-full text-left"><thead><tr><th className="p-1 border-b">Date</th><th className="p-1 border-b">Value (Score)</th></tr></thead>
+              <tbody>{sortedSessions.map(s => <tr key={s.id}><td className="p-1 border-b">{formatShortDate(s.date)}</td><td className="p-1 border-b">{s.symptomSeverity}</td></tr>)}</tbody>
+            </table>
+           </div>
+        </div>
 
-          <div className="text-center">
-            <button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button>
-          </div>
-        </main>
-      </div>
+        <div className="text-center">
+          <button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button>
+        </div>
+      </main>
     </div>
   );
 };
