@@ -5,7 +5,7 @@ import './index.css'; // Make sure our styles are imported
 // Type Definitions
 // ============================================================================
 
-// Utility: consistent short-date formatter (e.g., “Jun 20”)
+// Utility: consistent short-date formatter (e.g., "Jun 20")
 const formatShortDate = (isoDate: string) =>
   new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -76,7 +76,7 @@ const Header: React.FC = () => (
   <header className="bg-slate-800 text-white shadow-md">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
       <div className="flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-teal-400 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10c0 4.42 2.87 8.17 6.84 9.5.6.11.82-.26.82-.57v-2.03c-2.78.6-3.37-1.34-3.37-1.34-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.08-.73.08-.73 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.95-.26 1.98-.4 3-.4s2.05.13 3 .4c2.28-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .31.22.69.82.57A10 10 0 0 0 22 12 10 10 0 0 0 12 2z" /></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2" style={{color: '#EF6A3E'}} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a10 10 0 0 0-10 10c0 4.42 2.87 8.17 6.84 9.5.6.11.82-.26.82-.57v-2.03c-2.78.6-3.37-1.34-3.37-1.34-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.08-.73.08-.73 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.3.76-1.6-2.66-.3-5.46-1.33-5.46-5.93 0-1.31.47-2.38 1.24-3.22-.12-.3-.54-1.52.12-3.18 0 0 1-.32 3.3 1.23.95-.26 1.98-.4 3-.4s2.05.13 3 .4c2.28-1.55 3.3-1.23 3.3-1.23.66 1.66.24 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .31.22.69.82.57A10 10 0 0 0 22 12 10 10 0 0 0 12 2z" /></svg>
         <span className="text-2xl font-bold">NooMinds</span>
       </div>
       <p className="hidden sm:block text-sm text-slate-300">Fuel Smarter. Perform Better.</p>
@@ -87,7 +87,7 @@ const Header: React.FC = () => (
 const Footer: React.FC = () => (
   <footer className="bg-slate-800 text-slate-400 text-xs text-center py-4 mt-12">
     <p>&copy; {new Date().getFullYear()} NooMinds Ltd. All Rights Reserved.</p>
-    <a href="https://www.noominds.com" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors">
+    <a href="https://www.noominds.com" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors" style={{color: '#EF6A3E'}}>
       www.noominds.com
     </a>
   </footer>
@@ -161,7 +161,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
       <header className="mb-8">
         <h1 className="text-slate-900">Your Dashboard</h1>
         <p className="mt-2 text-lg text-slate-600">
-          Welcome back, <span className="font-bold text-teal-600">Craig Elliott</span>! Let's optimize your fueling.
+          Welcome back, <span className="font-bold" style={{color: '#EF6A3E'}}>Craig Elliott</span>! Let's optimize your fueling.
         </p>
       </header>
 
@@ -175,7 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Target Carb Intake</p>
-              <p className="text-3xl font-bold text-teal-600">{stats.targetCarbIntake}<span className="text-lg font-medium text-slate-500">g/hr</span></p>
+              <p className="text-3xl font-bold" style={{color: '#EF6A3E'}}>{stats.targetCarbIntake}<span className="text-lg font-medium text-slate-500">g/hr</span></p>
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Sessions Logged</p>
@@ -202,9 +202,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
               <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time.</p>
               <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
             </div>
-            <div className="card flex flex-col items-center text-center bg-teal-50 border-teal-200">
-              <h3 className="font-semibold mb-2 text-teal-800">4. Talk to AI Coach</h3>
-              <p className="text-sm text-teal-700 flex-grow mb-4">Get real-time guidance and answers from your AI coach.</p>
+            <div className="card flex flex-col items-center text-center" style={{backgroundColor: 'rgba(239, 106, 62, 0.1)', borderColor: 'rgba(239, 106, 62, 0.3)'}}>
+              <h3 className="font-semibold mb-2" style={{color: '#EF6A3E'}}>4. Talk to AI Coach</h3>
+              <p className="text-sm flex-grow mb-4" style={{color: '#C2410C'}}>Get real-time guidance and answers from your AI coach.</p>
               <button onClick={() => onNavigate('ai_coach')} className="btn btn-primary w-full">Ask Coach Noo</button>
             </div>
           </div>
@@ -273,7 +273,7 @@ const AICoach: React.FC<AICoachProps> = ({ sessions, onBackToDashboard }) => {
           'Authorization': `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
-          model: 'gpt-4-turbo',
+          model: 'gpt-4o',
           messages: [{ role: 'user', content: prompt }],
         }),
       });
@@ -364,11 +364,11 @@ This looks like a solid session. The carb rate was good, and symptoms were manag
           {messages.map((msg) => (
             <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
               {msg.sender === 'ai' && <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">AI</div>}
-              <div className={`max-w-md p-3 rounded-lg ${msg.sender === 'user' ? 'bg-teal-500 text-white' : 'bg-slate-100'}`}>
+              <div className={`max-w-md p-3 rounded-lg ${msg.sender === 'user' ? 'text-white' : 'bg-slate-100'}`} style={msg.sender === 'user' ? {backgroundColor: '#EF6A3E'} : {}}>
                 <p className="text-sm">{msg.text}</p>
                 <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full bg-teal-500 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">CE</div>}
+              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{backgroundColor: '#EF6A3E'}}>CE</div>}
             </div>
           ))}
           {isTyping && (
@@ -536,7 +536,7 @@ const SessionLogger: React.FC<SessionLoggerProps> = ({ onAddSession, onBackToDas
 
         <fieldset>
           <legend>3. GI Symptoms & Performance</legend>
-          <div><label className="form-label">Overall Symptom Severity (0=None, 10=Severe)</label><input type="range" min="0" max="10" name="symptomSeverity" value={formState.symptomSeverity} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-teal-600">{formState.symptomSeverity}</div></div>
+          <div><label className="form-label">Overall Symptom Severity (0=None, 10=Severe)</label><input type="range" min="0" max="10" name="symptomSeverity" value={formState.symptomSeverity} onChange={handleChange} className="w-full" /><div className="text-center font-bold" style={{color: '#EF6A3E'}}>{formState.symptomSeverity}</div></div>
           <div>
               <label className="form-label">Symptom Types</label>
               <div className="flex flex-wrap gap-4 mt-2">
@@ -545,7 +545,7 @@ const SessionLogger: React.FC<SessionLoggerProps> = ({ onAddSession, onBackToDas
                   ))}
               </div>
           </div>
-          <div><label className="form-label">Rate of Perceived Exertion (RPE, 1-10)</label><input type="range" min="1" max="10" name="rpe" value={formState.rpe} onChange={handleChange} className="w-full" /><div className="text-center font-bold text-teal-600">{formState.rpe}</div></div>
+          <div><label className="form-label">Rate of Perceived Exertion (RPE, 1-10)</label><input type="range" min="1" max="10" name="rpe" value={formState.rpe} onChange={handleChange} className="w-full" /><div className="text-center font-bold" style={{color: '#EF6A3E'}}>{formState.rpe}</div></div>
         </fieldset>
 
         <fieldset>
@@ -602,15 +602,15 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
 
         {/* Carb Intake Chart */}
         <div className="card">
-          <h3 className="font-semibold mb-4 text-teal-700">Carb Intake Trend (g/hr)</h3>
+          <h3 className="font-semibold mb-4" style={{color: '#EF6A3E'}}>Carb Intake Trend (g/hr)</h3>
           <div key={`carb-chart-${sessions.length}`} className="h-48 bg-slate-50 rounded p-2 flex items-end justify-around border relative">
             {sortedSessions.map(session => {
               const carbRate = session.duration > 0 ? session.carbs / (session.duration / 60) : 0;
               const barHeight = `${(carbRate / maxCarbRate) * 100}%`;
               return (
                 <div key={session.id} className="w-1/2 flex flex-col items-center justify-end" title={`Carb Rate: ${carbRate.toFixed(0)} g/hr on ${session.date}`}>
-                  <div className="text-xs font-bold text-teal-600 mb-1">{carbRate.toFixed(0)}</div>
-                  <div className="w-6 bg-teal-500 rounded-t" style={{ height: barHeight }}></div>
+                  <div className="text-xs font-bold mb-1" style={{color: '#EF6A3E'}}>{carbRate.toFixed(0)}</div>
+                  <div className="w-6 rounded-t" style={{ height: barHeight, backgroundColor: '#EF6A3E' }}></div>
                   <div className="text-xs mt-1">{formatShortDate(session.date)}</div>
                 </div>
               );
