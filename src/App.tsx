@@ -204,7 +204,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
               <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time.</p>
               <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
             </div>
-            <div className="card flex flex-col items-center text-center" style={{backgroundColor: 'rgba(239, 106, 62, 0.1)', borderColor: 'rgba(239, 106, 62, 0.3)'}}>
+            <div className="card flex flex-col items-center text-center" style={{backgroundColor: 'rgba(239, 106, 62, 0.1)', borderColor: 'rgba(239, 106, 62, 0.3)', borderWidth: '1px', borderStyle: 'solid'}}>
               <h3 className="font-semibold mb-2" style={{color: '#EF6A3E'}}>4. Talk to AI Coach</h3>
               <p className="text-sm flex-grow mb-4" style={{color: '#C2410C'}}>Get real-time guidance and answers from your AI coach.</p>
               <button onClick={() => onNavigate('ai_coach')} className="btn btn-primary w-full">Ask Coach Noo</button>
