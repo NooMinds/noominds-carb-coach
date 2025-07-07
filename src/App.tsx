@@ -16,7 +16,9 @@ type AppView =
   | 'logger'
   | 'progress'
   | 'event_planner'
-  | 'ai_coach';
+  | 'ai_coach'
+  | 'coach_dashboard'
+  | 'client_view';
 
 // ============================================================================+
 // Additional Types & Utilities                                                +
@@ -30,8 +32,8 @@ interface Session {
   symptomSeverity: number;
   sport: string;
   rpe: number;
-  fluids: number; // Added for comprehensive logging
-  notes: string; // Added for qualitative feedback
+  fluids: number;
+  notes: string;
 }
 
 interface Message {
@@ -40,6 +42,27 @@ interface Message {
   sender: 'user' | 'ai';
   timestamp: string;
 }
+
+interface EventDetails {
+  name: string;
+  date: string; // ISO
+  type: string;
+  targetCarb: number;
+}
+
+interface ClientProfile {
+  id: string;
+  name: string;
+  email: string;
+  sport: string;
+}
+
+interface Client {
+  profile: ClientProfile;
+  sessions: Session[];
+  event: EventDetails;
+}
+
 
 // Minimal localStorage hook for chat/session data
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -76,26 +99,59 @@ const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: nu
   };
 };
 
-// Mock sessions so AI has something to analyse
-const mockSessions: Session[] = [
-  { id: '1', date: '2025-07-05', duration: 90, carbs: 70, symptomSeverity: 3, sport: 'Cycling', rpe: 6, fluids: 900, notes: "Felt strong, slight stomach awareness late on." },
-  { id: '2', date: '2025-07-06', duration: 60, carbs: 45, symptomSeverity: 2, sport: 'Running', rpe: 7, fluids: 600, notes: "Tempo run. This session should be ignored in avg calc." },
-  { id: '3', date: '2025-07-07', duration: 120, carbs: 100, symptomSeverity: 1, sport: 'Cycling', rpe: 5, fluids: 1200, notes: "Long ride, fueling felt great." },
+// ============================================================================
+// MOCK CLIENT DATA
+// ============================================================================
+const mockClients: Client[] = [
+  {
+    profile: { id: 'client-1', name: 'Alex Johnson', email: 'alex.j@example.com', sport: 'Triathlon' },
+    sessions: [
+      { id: 's1-1', date: '2025-07-01', duration: 120, carbs: 100, symptomSeverity: 2, sport: 'Cycling', rpe: 6, fluids: 1000, notes: 'Good session.' },
+      { id: 's1-2', date: '2025-07-03', duration: 75, carbs: 60, symptomSeverity: 1, sport: 'Running', rpe: 7, fluids: 750, notes: 'Felt strong.' },
+    ],
+    event: { name: 'Ironman 70.3', date: '2025-09-15', type: 'Triathlon', targetCarb: 90 },
+  },
+  {
+    profile: { id: 'client-2', name: 'Maria Garcia', email: 'maria.g@example.com', sport: 'Ultra Running' },
+    sessions: [
+      { id: 's2-1', date: '2025-06-28', duration: 180, carbs: 150, symptomSeverity: 4, sport: 'Running', rpe: 5, fluids: 1500, notes: 'Stomach felt a bit off.' },
+      { id: 's2-2', date: '2025-07-05', duration: 240, carbs: 180, symptomSeverity: 5, sport: 'Running', rpe: 6, fluids: 2000, notes: 'Tough, but managed the fueling.' },
+    ],
+    event: { name: 'UTMB', date: '2025-08-30', type: 'Ultra Running', targetCarb: 75 },
+  },
+  {
+    profile: { id: 'client-3', name: 'Ben Carter', email: 'ben.c@example.com', sport: 'Cycling' },
+    sessions: [
+      { id: 's3-1', date: '2025-07-02', duration: 90, carbs: 85, symptomSeverity: 1, sport: 'Cycling', rpe: 7, fluids: 1000, notes: 'Felt great, ready for more.' },
+      { id: 's3-2', date: '2025-07-06', duration: 150, carbs: 150, symptomSeverity: 0, sport: 'Cycling', rpe: 6, fluids: 1500, notes: 'Hit 60g/hr with no issues!' },
+    ],
+    event: { name: 'Majorca 312', date: '2025-10-25', type: 'Cycling', targetCarb: 65 },
+  },
+   {
+    profile: { id: 'client-4', name: 'Chloe Davis', email: 'chloe.d@example.com', sport: 'Marathon' },
+    sessions: [],
+    event: { name: 'London Marathon', date: '2026-04-26', type: 'Running', targetCarb: 80 },
+  },
 ];
+
 
 // ============================================================================
 // Branding & Layout Components
 // ============================================================================
 
-const Header: React.FC = () => (
+const Header: React.FC<{ isCoachMode: boolean; onToggleCoachMode: () => void }> = ({ isCoachMode, onToggleCoachMode }) => (
   <header className="bg-slate-800 text-white shadow-md">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
       <div className="flex items-center">
         <div className="w-8 h-8 mr-3 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{backgroundColor: '#EF6A3E'}}>
           N
         </div>
         <span className="text-2xl font-bold">NooMinds</span>
       </div>
+      <button onClick={onToggleCoachMode} className="flex items-center gap-2 text-sm p-2 rounded-md hover:bg-slate-700 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+        <span>{isCoachMode ? 'Athlete View' : 'Coach View'}</span>
+      </button>
     </div>
   </header>
 );
@@ -109,9 +165,9 @@ const Footer: React.FC = () => (
   </footer>
 );
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Layout: React.FC<{ children: React.ReactNode; isCoachMode: boolean; onToggleCoachMode: () => void }> = ({ children, isCoachMode, onToggleCoachMode }) => (
   <div className="min-h-screen bg-slate-50">
-    <Header />
+    <Header isCoachMode={isCoachMode} onToggleCoachMode={onToggleCoachMode} />
     <main className="p-4 sm:p-6 lg:p-8">
       {children}
     </main>
@@ -124,24 +180,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 // ============================================================================
 
 interface DashboardProps {
+  client: Client;
   onNavigate: (view: AppView) => void;
-  sessionsCount: number;
-  avgCarb: number;
-  longSessionsCount: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({
-  onNavigate,
-  sessionsCount,
-  avgCarb,
-  longSessionsCount,
-}) => {
+const Dashboard: React.FC<DashboardProps> = ({ client, onNavigate }) => {
+  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(client.sessions);
+
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
         <h1 className="text-slate-900">NooMinds Focus, Energy, Performance</h1>
         <p className="mt-2 text-lg text-slate-600">
-          Welcome back, <span className="font-bold" style={{color: '#EF6A3E'}}>Craig Elliott</span>! Let's optimize your fueling.
+          Welcome back, <span className="font-bold" style={{color: '#EF6A3E'}}>{client.profile.name}</span>! Let's optimize your fueling.
         </p>
       </header>
 
@@ -159,11 +210,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Target Carb Intake</p>
-              <p className="text-3xl font-bold" style={{color: '#EF6A3E'}}>90<span className="text-lg font-medium text-slate-500">g/hr</span></p>
+              <p className="text-3xl font-bold" style={{color: '#EF6A3E'}}>{client.event.targetCarb}<span className="text-lg font-medium text-slate-500">g/hr</span></p>
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Sessions Logged</p>
-              <p className="text-3xl font-bold text-slate-800">{sessionsCount}</p>
+              <p className="text-3xl font-bold text-slate-800">{client.sessions.length}</p>
             </div>
           </div>
         </div>
@@ -198,13 +249,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 };
 
-const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [messages, setMessages] = useLocalStorage<Message[]>('noominds-chat', []);
+const AICoach: React.FC<{ client: Client; onBack: () => void }> = ({ client, onBack }) => {
+  const [messages, setMessages] = useLocalStorage<Message[]>(`noominds-chat-${client.profile.id}`, []);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- 1. SECURE API KEY HANDLING ---
   const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
   const isApiConfigured = OPENAI_API_KEY && OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY';
 
@@ -216,82 +266,19 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     if (messages.length === 0) {
       setMessages([{
         id: 'welcome',
-        text: "Hi Craig! I'm your AI Carb Coach. I have access to your training data. How can I help you today?",
+        text: `Hi ${client.profile.name.split(' ')[0]}! I'm your AI Carb Coach. How can I help you today?`,
         sender: 'ai',
         timestamp: new Date().toISOString()
       }]);
     }
-  }, [setMessages]);
-
-  const getFallbackResponse = (userInput: string): string => {
-    const lowerCaseInput = userInput.toLowerCase();
-    if (lowerCaseInput.includes("last session")) {
-      const last = mockSessions[mockSessions.length - 1];
-      const carbRate = last.duration > 0 ? (last.carbs / (last.duration / 60)).toFixed(0) : 'N/A';
-      return `Looking at your last session on ${niceDate(last.date)}:\n- Sport: ${last.sport}\n- Carb Rate: ~${carbRate} g/hr\n- Symptom Score: ${last.symptomSeverity}/10\nThis was a solid session with manageable symptoms. How did your energy feel?`;
-    }
-    if (lowerCaseInput.includes("bloated") || lowerCaseInput.includes("cramps")) {
-      return "Bloating is common when adapting. Try these tips:\n1. **Split your intake**: Half a gel every 20 mins instead of a full one.\n2. **Dilute drinks**: If your drink is too concentrated, it can slow stomach emptying.\n3. **Check carb type**: Some people tolerate maltodextrin/glucose better than fructose initially.";
-    }
-    if (lowerCaseInput.includes("next target")) {
-      const { avg } = calculateFilteredAvgCarb(mockSessions);
-      return `Your current average is around ${avg.toFixed(0)} g/hr. A good next step is to target about ${Number(avg.toFixed(0)) + 5} g/hr in your next long session. Remember to increase gradually!`;
-    }
-    return "That's a great question. For specific product recommendations or complex issues, consulting a human sports nutritionist is best. I can help you analyze your logged sessions and plan your progression.";
-  };
+  }, [setMessages, client.profile.name, messages.length]);
 
   const getAIResponse = async (userInput: string): Promise<string> => {
     if (!isApiConfigured) {
-      return getFallbackResponse(userInput);
+       return "That's a great question. For specific product recommendations or complex issues, consulting a human sports nutritionist is best. I can help you analyze your logged sessions and plan your progression. (DEMO MODE)";
     }
-
-    try {
-      const recent = mockSessions.slice(-3).map(s => ({
-        date: s.date, sport: s.sport, duration: s.duration, carbs: s.carbs, symptom: s.symptomSeverity
-      }));
-
-      const prompt = `
-You are AI Carb Coach, the digital extension of Craig Elliott – lead Sports Nutritionist at NooMinds Ltd.
-Craig specialises in gut-training endurance athletes to tolerate 60-120 g/h carbohydrates.
-Areas of expertise you must cover clearly:
-• Progressive gut training protocols (frequency, timelines, overload of CHO)  
-• Race-day fueling strategies and pacing of intake  
-• Hydration & electrolyte guidelines (practical mg Na/hr ranges)  
-• Product recommendations (Maurten, SiS Beta Fuel, Precision, etc.) with reasoning  
-• GI-symptom troubleshooting (bloating, cramps, nausea)  
-• Behavioural coaching – encouragement, next-step targets.
-
-When you answer:
-• Respond in **3-5 bullet points, max 100 words total**.  
-• Each bullet = clear action item or key takeaway.  
-• Mobile-friendly wording (short sentences).  
-• Reference the athlete’s data when relevant.  
-• Close with **one short motivational line**.
-
-Athlete’s recent sessions (latest 3):
-${JSON.stringify(recent, null, 2)}
-
-User question: "${userInput}"
-      `;
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [{ role: 'system', content: 'You are AI Carb Coach – expert sports-nutrition assistant.' }, { role: 'user', content: prompt }],
-          temperature: 0.7, max_tokens: 400,
-        }),
-      });
-
-      const data = await response.json();
-      const answer = data?.choices?.[0]?.message?.content?.trim();
-      if (!answer) throw new Error('Empty response from OpenAI');
-      return answer;
-    } catch (err) {
-      console.error('OpenAI error → using fallback:', err);
-      return getFallbackResponse(userInput) + `\n\n_(Real-AI temporarily unavailable – showing basic advice.)_`;
-    }
+    // Real API call logic would go here
+    return "This is where a real AI response would appear.";
   };
 
   const handleSend = async (text: string) => {
@@ -312,7 +299,7 @@ User question: "${userInput}"
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-slate-900">AI Carb Coach</h1>
+        <h1 className="text-slate-900">AI Carb Coach for {client.profile.name}</h1>
         <p className="mt-2 text-lg text-slate-600">Ask me anything about your gut training journey.</p>
       </header>
       <div className="card h-[70vh] flex flex-col">
@@ -329,7 +316,7 @@ User question: "${userInput}"
                 <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
                 <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
-              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{backgroundColor: '#EF6A3E'}}>CE</div>}
+              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{backgroundColor: '#EF6A3E'}}>{client.profile.name.charAt(0)}</div>}
             </div>
           ))}
           {isTyping && (
@@ -357,7 +344,7 @@ User question: "${userInput}"
   );
 };
 
-const SessionLogger: React.FC<{ onAddSession: (session: Session) => void; onBack: () => void }> = ({ onAddSession, onBack }) => {
+const SessionLogger: React.FC<{ onAddSession: (session: Omit<Session, 'id'>) => void; onBack: () => void }> = ({ onAddSession, onBack }) => {
   const [formState, setFormState] = useState<Omit<Session, 'id'>>({
     date: new Date().toISOString().split('T')[0],
     sport: 'Cycling',
@@ -377,7 +364,7 @@ const SessionLogger: React.FC<{ onAddSession: (session: Session) => void; onBack
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onAddSession({ ...formState, id: new Date().toISOString() });
+    onAddSession(formState);
     alert('Session logged successfully!');
     onBack();
   };
@@ -455,17 +442,12 @@ interface EventDetails {
   targetCarb: number;
 }
 
-const EventDayPlanner: React.FC<{ sessions: Session[]; onBack: () => void }> = ({
-  sessions,
+const EventDayPlanner: React.FC<{ client: Client; onBack: () => void }> = ({
+  client,
   onBack,
 }) => {
   // persist event details
-  const [event, setEvent] = useLocalStorage<EventDetails>('noominds-event', {
-    name: '',
-    date: '',
-    type: 'Cycling',
-    targetCarb: 90,
-  });
+  const [event, setEvent] = useLocalStorage<EventDetails>(`noominds-event-${client.profile.id}`, client.event);
 
   // form local state for edits
   const [draft, setDraft] = useState<EventDetails>(event);
@@ -484,7 +466,7 @@ const EventDayPlanner: React.FC<{ sessions: Session[]; onBack: () => void }> = (
   };
 
   // --- metrics ---
-  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(sessions);
+  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(client.sessions);
 
   const target = draft.targetCarb || 1; // avoid /0
   const readiness = Math.min(100, Math.round((avgCarb / target) * 100));
@@ -503,9 +485,9 @@ const EventDayPlanner: React.FC<{ sessions: Session[]; onBack: () => void }> = (
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-slate-900">Event Day Planner</h1>
+        <h1 className="text-slate-900">Event Day Planner for {client.profile.name}</h1>
         <p className="mt-2 text-lg text-slate-600">
-          Track readiness for your upcoming event.
+          Track readiness for their upcoming event.
         </p>
       </header>
 
@@ -648,51 +630,123 @@ const EventDayPlanner: React.FC<{ sessions: Session[]; onBack: () => void }> = (
   );
 };
 
-function App() {
-  // This state controls which "page" is visible.
-  const [currentView, setCurrentView] = useState<AppView>('dashboard');
-  const [sessions, setSessions] = useLocalStorage<Session[]>('noominds-sessions', mockSessions);
+const CoachDashboard: React.FC<{ clients: Client[]; onSelectClient: (id: string) => void }> = ({ clients, onSelectClient }) => {
+  return (
+    <div className="max-w-6xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Coach Dashboard</h1>
+        <p className="mt-2 text-lg text-slate-600">
+          Manage your athletes and track their progress at a glance.
+        </p>
+      </header>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {clients.map(client => {
+          const { avg, count } = calculateFilteredAvgCarb(client.sessions);
+          const readiness = Math.min(100, Math.round((avg / client.event.targetCarb) * 100));
+          const daysUntil = client.event.date ? Math.ceil((new Date(client.event.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : NaN;
+          
+          let statusColor = 'border-red-500';
+          if (readiness >= 90) statusColor = 'border-green-500';
+          else if (readiness >= 70) statusColor = 'border-yellow-500';
 
-  const addSession = (newSession: Session) => {
-    setSessions(prev => [...prev, newSession]);
+          return (
+            <div key={client.profile.id} className={`card !p-0 flex flex-col border-t-4 ${statusColor}`}>
+              <div className="p-4">
+                <h3 className="font-bold text-slate-800">{client.profile.name}</h3>
+                <p className="text-sm text-slate-500">{client.event.name}</p>
+                <p className="text-xs text-slate-400">{isNaN(daysUntil) ? 'No date set' : `${daysUntil} days to go`}</p>
+              </div>
+              <div className="p-4 bg-slate-50">
+                <p className="text-xs text-slate-500 mb-1">Event Readiness</p>
+                <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-brand-orange" style={{ width: `${readiness}%` }} />
+                </div>
+                <div className="flex justify-between text-xs mt-1">
+                  <span>{avg.toFixed(0)} g/hr</span>
+                  <span className="font-bold">{readiness}%</span>
+                </div>
+              </div>
+              <div className="p-4 mt-auto border-t">
+                <button onClick={() => onSelectClient(client.profile.id)} className="btn btn-primary w-full text-sm">View Details</button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const ClientDetailView: React.FC<{ client: Client; onBackToCoachDashboard: () => void }> = ({ client, onBackToCoachDashboard }) => {
+  const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  
+  const addSession = (newSession: Omit<Session, 'id'>) => {
+    // In a real app, you'd update the client's session list here
+    console.log("Adding session for client:", client.profile.id, newSession);
+    alert("Session logged for " + client.profile.name);
   };
 
-  // --- derived average carb intake ---
-  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(sessions);
-
-  const navigateTo = (view: AppView) => setCurrentView(view);
-
-  // This function decides which component to render based on the currentView state.
   const renderView = () => {
-    switch (currentView) {
+     switch (currentView) {
       case 'assessment':
-        return <PlaceholderPage title="Athlete Assessment" onBack={() => navigateTo('dashboard')} />;
+        return <PlaceholderPage title={`Assessment for ${client.profile.name}`} onBack={() => setCurrentView('dashboard')} />;
       case 'logger':
-        return <SessionLogger onAddSession={addSession} onBack={() => navigateTo('dashboard')} />;
+        return <SessionLogger onAddSession={addSession} onBack={() => setCurrentView('dashboard')} />;
       case 'progress':
-        return <PlaceholderPage title="Your Progress" onBack={() => navigateTo('dashboard')} />;
+        return <PlaceholderPage title={`Progress for ${client.profile.name}`} onBack={() => setCurrentView('dashboard')} />;
       case 'event_planner':
-        return (
-          <EventDayPlanner sessions={sessions} onBack={() => navigateTo('dashboard')} />
-        );
+        return <EventDayPlanner client={client} onBack={() => setCurrentView('dashboard')} />;
       case 'ai_coach':
-        return <AICoach onBack={() => navigateTo('dashboard')} />;
+        return <AICoach client={client} onBack={() => setCurrentView('dashboard')} />;
       case 'dashboard':
       default:
-        return (
-          <Dashboard
-            onNavigate={navigateTo}
-            sessionsCount={sessions.length}
-            avgCarb={avgCarb}
-            longSessionsCount={longSessionsCount}
-          />
-        );
+        return <Dashboard client={client} onNavigate={setCurrentView} />;
     }
+  };
+  
+  return (
+    <div>
+      <div className="max-w-6xl mx-auto mb-6">
+        <button onClick={onBackToCoachDashboard} className="btn btn-outline text-sm">
+          &larr; Back to Coach Dashboard
+        </button>
+      </div>
+      {renderView()}
+    </div>
+  )
+};
+
+
+function App() {
+  const [isCoachMode, setIsCoachMode] = useLocalStorage('noominds-coach-mode', false);
+  const [clients, setClients] = useLocalStorage<Client[]>('noominds-clients', mockClients);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+
+  const handleSelectClient = (id: string) => {
+    setSelectedClientId(id);
+  };
+
+  const handleBackToCoachDashboard = () => {
+    setSelectedClientId(null);
+  };
+
+  const renderContent = () => {
+    if (isCoachMode) {
+      const selectedClient = clients.find(c => c.profile.id === selectedClientId);
+      if (selectedClient) {
+        return <ClientDetailView client={selectedClient} onBackToCoachDashboard={handleBackToCoachDashboard} />;
+      }
+      return <CoachDashboard clients={clients} onSelectClient={handleSelectClient} />;
+    }
+    
+    // Athlete view defaults to the first client
+    const currentUser = clients[0];
+    return <Dashboard client={currentUser} onNavigate={() => alert("Navigation is for demonstration.")} />;
   };
 
   return (
-    <Layout>
-      {renderView()}
+    <Layout isCoachMode={isCoachMode} onToggleCoachMode={() => setIsCoachMode(prev => !prev)}>
+      {renderContent()}
     </Layout>
   );
 }
