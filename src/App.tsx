@@ -232,10 +232,11 @@ Areas of expertise you must cover clearly:
 • Behavioural coaching – encouragement, next-step targets.
 
 When you answer:
-• Be concise, actionable & professional, like a paid consultation.  
+• Respond in **3-5 bullet points, max 100 words total**.  
+• Each bullet = clear action item or key takeaway.  
+• Mobile-friendly wording (short sentences).  
 • Reference the athlete’s data when relevant.  
-• Use bullet-points where helpful.  
-• End with a motivating closing line.
+• Close with **one short motivational line**.
 
 Athlete’s recent sessions (latest 3):
 ${JSON.stringify(recent, null, 2)}
