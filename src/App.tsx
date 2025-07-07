@@ -24,6 +24,8 @@ interface Session {
   symptomSeverity: number;
   sport: string;
   rpe: number;
+  fluids: number; // Added for comprehensive logging
+  notes: string; // Added for qualitative feedback
 }
 
 interface Message {
@@ -55,8 +57,8 @@ const niceDate = (iso: string) =>
 
 // Mock sessions so AI has something to analyse
 const mockSessions: Session[] = [
-  { id: '1', date: '2025-07-05', duration: 90, carbs: 70, symptomSeverity: 3, sport: 'Cycling', rpe: 6 },
-  { id: '2', date: '2025-07-06', duration: 60, carbs: 45, symptomSeverity: 2, sport: 'Running', rpe: 7 },
+  { id: '1', date: '2025-07-05', duration: 90, carbs: 70, symptomSeverity: 3, sport: 'Cycling', rpe: 6, fluids: 900, notes: "Felt strong, slight stomach awareness late on." },
+  { id: '2', date: '2025-07-06', duration: 60, carbs: 45, symptomSeverity: 2, sport: 'Running', rpe: 7, fluids: 600, notes: "Tempo run. Fueling felt good, no issues." },
 ];
 
 // ============================================================================
@@ -101,9 +103,10 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 interface DashboardProps {
   onNavigate: (view: AppView) => void;
+  sessionsCount: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
@@ -127,7 +130,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Sessions Logged</p>
-              <p className="text-3xl font-bold text-slate-800">{mockSessions.length}</p>
+              <p className="text-3xl font-bold text-slate-800">{sessionsCount}</p>
             </div>
           </div>
         </div>
@@ -169,12 +172,6 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // --- 1. SECURE API KEY HANDLING ---
-  // Vite exposes environment variables prefixed with "VITE_" on the `import.meta.env` object.
-  // To set this up:
-  //   1. Create a file named `.env` in the root of your project.
-  //   2. Add this line to it: VITE_OPENAI_API_KEY="sk-your-actual-key-here"
-  //   3. Restart your development server.
-  //   4. Add `.env` to your `.gitignore` file to keep your key secret!
   const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
   const isApiConfigured = OPENAI_API_KEY && OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY';
 
@@ -327,6 +324,77 @@ User question: "${userInput}"
   );
 };
 
+const SessionLogger: React.FC<{ onAddSession: (session: Session) => void; onBack: () => void }> = ({ onAddSession, onBack }) => {
+  const [formState, setFormState] = useState<Omit<Session, 'id'>>({
+    date: new Date().toISOString().split('T')[0],
+    sport: 'Cycling',
+    duration: 90,
+    carbs: 60,
+    fluids: 750,
+    symptomSeverity: 0,
+    rpe: 5,
+    notes: '',
+  });
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const isNumeric = ['duration', 'carbs', 'fluids', 'symptomSeverity', 'rpe'].includes(name);
+    setFormState(prev => ({ ...prev, [name]: isNumeric ? Number(value) : value }));
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    onAddSession({ ...formState, id: new Date().toISOString() });
+    alert('Session logged successfully!');
+    onBack();
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Log a Training Session</h1>
+        <p className="mt-2 text-lg text-slate-600">Track your fueling and symptoms to see your progress.</p>
+      </header>
+
+      <form onSubmit={handleSubmit} className="card space-y-8">
+        <fieldset>
+          <legend>1. Session Details</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label className="form-label">Date</label><input type="date" name="date" value={formState.date} onChange={handleChange} className="form-input" /></div>
+            <div><label className="form-label">Sport</label><select name="sport" value={formState.sport} onChange={handleChange} className="form-select"><option>Cycling</option><option>Running</option><option>Swimming</option><option>Triathlon</option><option>Other</option></select></div>
+            <div><label className="form-label">Duration (minutes)</label><input type="number" name="duration" value={formState.duration} onChange={handleChange} className="form-input" /></div>
+            <div><label className="form-label">Rate of Perceived Exertion (RPE, 1-10)</label><input type="range" min="1" max="10" name="rpe" value={formState.rpe} onChange={handleChange} className="w-full" /><div className="text-center font-bold" style={{color: '#EF6A3E'}}>{formState.rpe}</div></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Nutrition & Hydration</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div><label className="form-label">Total Carbs Consumed (grams)</label><input type="number" name="carbs" value={formState.carbs} onChange={handleChange} className="form-input" /></div>
+            <div><label className="form-label">Total Fluids Consumed (ml)</label><input type="number" name="fluids" value={formState.fluids} onChange={handleChange} className="form-input" /></div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. GI Symptoms</legend>
+          <div><label className="form-label">Overall Symptom Severity (0=None, 10=Severe)</label><input type="range" min="0" max="10" name="symptomSeverity" value={formState.symptomSeverity} onChange={handleChange} className="w-full" /><div className="text-center font-bold" style={{color: '#EF6A3E'}}>{formState.symptomSeverity}</div></div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>4. Notes</legend>
+          <div><label className="form-label">Any other observations?</label><textarea name="notes" value={formState.notes} onChange={handleChange} className="form-input" rows={4} placeholder="e.g., What specific products did you use? How was your energy?" /></div>
+        </fieldset>
+        
+        <div className="flex justify-between items-center pt-8 border-t">
+          <button type="button" onClick={onBack} className="btn btn-outline">Cancel</button>
+          <button type="submit" className="btn btn-primary">Log Session</button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+
 // Placeholder for other pages to ensure navigation works
 const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
   <div className="max-w-4xl mx-auto">
@@ -350,6 +418,11 @@ const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ titl
 function App() {
   // This state controls which "page" is visible.
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
+  const [sessions, setSessions] = useLocalStorage<Session[]>('noominds-sessions', mockSessions);
+
+  const addSession = (newSession: Session) => {
+    setSessions(prev => [...prev, newSession]);
+  };
 
   const navigateTo = (view: AppView) => setCurrentView(view);
 
@@ -359,14 +432,14 @@ function App() {
       case 'assessment':
         return <PlaceholderPage title="Athlete Assessment" onBack={() => navigateTo('dashboard')} />;
       case 'logger':
-        return <PlaceholderPage title="Log a Session" onBack={() => navigateTo('dashboard')} />;
+        return <SessionLogger onAddSession={addSession} onBack={() => navigateTo('dashboard')} />;
       case 'progress':
         return <PlaceholderPage title="Your Progress" onBack={() => navigateTo('dashboard')} />;
       case 'ai_coach':
         return <AICoach onBack={() => navigateTo('dashboard')} />;
       case 'dashboard':
       default:
-        return <Dashboard onNavigate={navigateTo} />;
+        return <Dashboard onNavigate={navigateTo} sessionsCount={sessions.length} />;
     }
   };
 
