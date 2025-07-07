@@ -168,6 +168,11 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /* -----------------------------------------------------------------------
+   * 1) OPENAI API  –––  add your key below.
+   * --------------------------------------------------------------------- */
+  const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'; // <-  🔑  Set key in ENV / .env  (keep empty for mock mode)
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -183,12 +188,13 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   }, [setMessages]);
 
-  const getAIResponse = async (userInput: string): Promise<string> => {
+  /* -----------------------------------------------------------------------
+   * 2)  FALLBACK (existing rule-based answers)
+   * --------------------------------------------------------------------- */
+  const getFallbackResponse = (userInput: string): string => {
     const lowerCaseInput = userInput.toLowerCase();
     
-    // Simulate API call delay
-    await new Promise(res => setTimeout(res, 1200));
-
+    /* ------- keep existing simple rules here -------- */
     if (lowerCaseInput.includes("last session")) {
       const last = mockSessions[mockSessions.length - 1];
       const carbRate = last.duration > 0 ? (last.carbs / (last.duration / 60)).toFixed(0) : 'N/A';
@@ -202,6 +208,75 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       return `Your current average is around ${avgCarbRate.toFixed(0)} g/hr. A good next step is to target about ${Number(avgCarbRate.toFixed(0)) + 5} g/hr in your next long session. Remember to increase gradually!`;
     }
     return "That's a great question. For specific product recommendations or complex issues, consulting a human sports nutritionist is best. I can help you analyze your logged sessions and plan your progression.";
+  };
+
+  /* -----------------------------------------------------------------------
+   * 3) REAL OPENAI CALL
+   * --------------------------------------------------------------------- */
+  const getAIResponse = async (userInput: string): Promise<string> => {
+    /* If no key – work in mock / fallback mode */
+    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY') {
+      return getFallbackResponse(userInput);
+    }
+
+    try {
+      /* Build a short summary of recent sessions so the model has context */
+      const recent = mockSessions.slice(-3).map(s => ({
+        date: s.date,
+        sport: s.sport,
+        duration: s.duration,
+        carbs: s.carbs,
+        symptom: s.symptomSeverity
+      }));
+
+      const prompt = `
+You are AI Carb Coach, the digital extension of Craig Elliott – lead Sports Nutritionist at NooMinds Ltd.
+Craig specialises in gut-training endurance athletes to tolerate 60-120 g/h carbohydrates.
+Areas of expertise you must cover clearly:
+• Progressive gut training protocols (frequency, timelines, overload of CHO)  
+• Race-day fueling strategies and pacing of intake  
+• Hydration & electrolyte guidelines (practical mg Na/hr ranges)  
+• Product recommendations (Maurten, SiS Beta Fuel, Precision, etc.) with reasoning  
+• GI-symptom troubleshooting (bloating, cramps, nausea)  
+• Behavioural coaching – encouragement, next-step targets.
+
+When you answer:
+• Be concise, actionable & professional, like a paid consultation.  
+• Reference the athlete’s data when relevant.  
+• Use bullet-points where helpful.  
+• End with a motivating closing line.
+
+Athlete’s recent sessions (latest 3):
+${JSON.stringify(recent, null, 2)}
+
+User question: "${userInput}"
+      `;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${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}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: 'You are AI Carb Coach – expert sports-nutrition assistant.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 400,
+        }),
+      });
+
+      const data = await response.json();
+      const answer = data?.choices?.[0]?.message?.content?.trim();
+      if (!answer) throw new Error('Empty response');
+      return answer;
+    } catch (err) {
+      console.error('OpenAI error → using fallback:', err);
+      return getFallbackResponse(userInput) + `\n\n_(Real-AI temporarily unavailable – showing basic advice.)_`;
+    }
   };
 
   const handleSend = async (text: string) => {
