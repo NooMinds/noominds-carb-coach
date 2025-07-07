@@ -168,10 +168,15 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  /* -----------------------------------------------------------------------
-   * 1) OPENAI API  –––  add your key below.
-   * --------------------------------------------------------------------- */
-  const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'; // <-  🔑  Set key in ENV / .env  (keep empty for mock mode)
+  // --- 1. SECURE API KEY HANDLING ---
+  // Vite exposes environment variables prefixed with "VITE_" on the `import.meta.env` object.
+  // To set this up:
+  //   1. Create a file named `.env` in the root of your project.
+  //   2. Add this line to it: VITE_OPENAI_API_KEY="sk-your-actual-key-here"
+  //   3. Restart your development server.
+  //   4. Add `.env` to your `.gitignore` file to keep your key secret!
+  const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  const isApiConfigured = OPENAI_API_KEY && OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY';
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -188,13 +193,8 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   }, [setMessages]);
 
-  /* -----------------------------------------------------------------------
-   * 2)  FALLBACK (existing rule-based answers)
-   * --------------------------------------------------------------------- */
   const getFallbackResponse = (userInput: string): string => {
     const lowerCaseInput = userInput.toLowerCase();
-    
-    /* ------- keep existing simple rules here -------- */
     if (lowerCaseInput.includes("last session")) {
       const last = mockSessions[mockSessions.length - 1];
       const carbRate = last.duration > 0 ? (last.carbs / (last.duration / 60)).toFixed(0) : 'N/A';
@@ -210,23 +210,14 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return "That's a great question. For specific product recommendations or complex issues, consulting a human sports nutritionist is best. I can help you analyze your logged sessions and plan your progression.";
   };
 
-  /* -----------------------------------------------------------------------
-   * 3) REAL OPENAI CALL
-   * --------------------------------------------------------------------- */
   const getAIResponse = async (userInput: string): Promise<string> => {
-    /* If no key – work in mock / fallback mode */
-    if (!OPENAI_API_KEY || OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY') {
+    if (!isApiConfigured) {
       return getFallbackResponse(userInput);
     }
 
     try {
-      /* Build a short summary of recent sessions so the model has context */
       const recent = mockSessions.slice(-3).map(s => ({
-        date: s.date,
-        sport: s.sport,
-        duration: s.duration,
-        carbs: s.carbs,
-        symptom: s.symptomSeverity
+        date: s.date, sport: s.sport, duration: s.duration, carbs: s.carbs, symptom: s.symptomSeverity
       }));
 
       const prompt = `
@@ -254,24 +245,17 @@ User question: "${userInput}"
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OpenAI API key here}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${OPENAI_API_KEY}` },
         body: JSON.stringify({
           model: 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'You are AI Carb Coach – expert sports-nutrition assistant.' },
-            { role: 'user', content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 400,
+          messages: [{ role: 'system', content: 'You are AI Carb Coach – expert sports-nutrition assistant.' }, { role: 'user', content: prompt }],
+          temperature: 0.7, max_tokens: 400,
         }),
       });
 
       const data = await response.json();
       const answer = data?.choices?.[0]?.message?.content?.trim();
-      if (!answer) throw new Error('Empty response');
+      if (!answer) throw new Error('Empty response from OpenAI');
       return answer;
     } catch (err) {
       console.error('OpenAI error → using fallback:', err);
@@ -281,7 +265,6 @@ User question: "${userInput}"
 
   const handleSend = async (text: string) => {
     if (!text.trim()) return;
-
     const userMessage: Message = { id: Date.now().toString(), text, sender: 'user', timestamp: new Date().toISOString() };
     setMessages(prev => [...prev, userMessage]);
     
@@ -302,6 +285,11 @@ User question: "${userInput}"
         <p className="mt-2 text-lg text-slate-600">Ask me anything about your gut training journey.</p>
       </header>
       <div className="card h-[70vh] flex flex-col">
+        {!isApiConfigured && (
+          <div className="p-2 text-center bg-yellow-100 text-yellow-800 text-xs rounded-md mb-4 border border-yellow-200">
+            <strong>Demonstration Mode:</strong> API key not configured. Responses are pre-programmed.
+          </div>
+        )}
         <div className="flex-grow overflow-y-auto pr-4 -mr-4 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
