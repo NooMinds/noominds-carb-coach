@@ -256,7 +256,7 @@ User question: "${userInput}"
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${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}`,
+          Authorization: `Bearer ${OpenAI API key here}`,
         },
         body: JSON.stringify({
           model: 'gpt-4o',
