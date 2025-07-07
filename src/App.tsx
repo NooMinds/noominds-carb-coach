@@ -10,7 +10,13 @@ import './index.css'; // We need this for the basic layout and component styles.
 // ============================================================================
 // Type Definitions
 // ============================================================================
-type AppView = 'dashboard' | 'assessment' | 'logger' | 'progress' | 'ai_coach';
+type AppView =
+  | 'dashboard'
+  | 'assessment'
+  | 'logger'
+  | 'progress'
+  | 'event_planner'
+  | 'ai_coach';
 
 // ============================================================================+
 // Additional Types & Utilities                                                +
@@ -55,10 +61,26 @@ function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<Re
 const niceDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
 
+// Helper function to calculate average carb rate ONLY for sessions > 60 minutes
+const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: number } => {
+  const longSessions = sessions.filter(s => s.duration > 60);
+  if (longSessions.length === 0) {
+    return { avg: 0, count: 0 };
+  }
+  const totalCarbRate = longSessions.reduce((sum, s) => {
+    return sum + (s.carbs / (s.duration / 60));
+  }, 0);
+  return {
+    avg: totalCarbRate / longSessions.length,
+    count: longSessions.length,
+  };
+};
+
 // Mock sessions so AI has something to analyse
 const mockSessions: Session[] = [
   { id: '1', date: '2025-07-05', duration: 90, carbs: 70, symptomSeverity: 3, sport: 'Cycling', rpe: 6, fluids: 900, notes: "Felt strong, slight stomach awareness late on." },
-  { id: '2', date: '2025-07-06', duration: 60, carbs: 45, symptomSeverity: 2, sport: 'Running', rpe: 7, fluids: 600, notes: "Tempo run. Fueling felt good, no issues." },
+  { id: '2', date: '2025-07-06', duration: 60, carbs: 45, symptomSeverity: 2, sport: 'Running', rpe: 7, fluids: 600, notes: "Tempo run. This session should be ignored in avg calc." },
+  { id: '3', date: '2025-07-07', duration: 120, carbs: 100, symptomSeverity: 1, sport: 'Cycling', rpe: 5, fluids: 1200, notes: "Long ride, fueling felt great." },
 ];
 
 // ============================================================================
@@ -104,9 +126,16 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 interface DashboardProps {
   onNavigate: (view: AppView) => void;
   sessionsCount: number;
+  avgCarb: number;
+  longSessionsCount: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
+const Dashboard: React.FC<DashboardProps> = ({
+  onNavigate,
+  sessionsCount,
+  avgCarb,
+  longSessionsCount,
+}) => {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
@@ -122,7 +151,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="card text-center">
               <p className="text-sm text-slate-500">Current Carb Intake</p>
-              <p className="text-3xl font-bold text-slate-800">45<span className="text-lg font-medium text-slate-500">g/hr</span></p>
+              <p className="text-3xl font-bold text-slate-800">
+                {isNaN(avgCarb) || avgCarb === 0 ? '--' : avgCarb.toFixed(0)}
+                <span className="text-lg font-medium text-slate-500">g/hr</span>
+              </p>
+              <p className="text-xs text-slate-400 mt-1">(from {longSessionsCount} sessions &gt; 60 min)</p>
             </div>
             <div className="card text-center">
               <p className="text-sm text-slate-500">Target Carb Intake</p>
@@ -149,9 +182,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate, sessionsCount }) => {
               <button onClick={() => onNavigate('logger')} className="btn btn-outline w-full">Log Session</button>
             </div>
             <div className="card flex flex-col items-center text-center">
-              <h3 className="font-semibold mb-2">3. View Your Progress</h3>
-              <p className="text-sm text-slate-600 flex-grow mb-4">See how your carb tolerance improves over time.</p>
-              <button onClick={() => onNavigate('progress')} className="btn btn-outline w-full">View Progress</button>
+              <h3 className="font-semibold mb-2">3. Event Day Planner</h3>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Track readiness for your goal event.</p>
+              <button onClick={() => onNavigate('event_planner')} className="btn btn-outline w-full">Open Planner</button>
             </div>
             <div className="card flex flex-col items-center text-center" style={{backgroundColor: 'rgba(239, 106, 62, 0.1)', borderColor: 'rgba(239, 106, 62, 0.3)', borderWidth: '1px', borderStyle: 'solid'}}>
               <h3 className="font-semibold mb-2" style={{color: '#EF6A3E'}}>4. Talk to AI Carb Coach</h3>
@@ -201,8 +234,8 @@ const AICoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       return "Bloating is common when adapting. Try these tips:\n1. **Split your intake**: Half a gel every 20 mins instead of a full one.\n2. **Dilute drinks**: If your drink is too concentrated, it can slow stomach emptying.\n3. **Check carb type**: Some people tolerate maltodextrin/glucose better than fructose initially.";
     }
     if (lowerCaseInput.includes("next target")) {
-      const avgCarbRate = mockSessions.reduce((sum, s) => sum + (s.carbs / (s.duration / 60)), 0) / mockSessions.length;
-      return `Your current average is around ${avgCarbRate.toFixed(0)} g/hr. A good next step is to target about ${Number(avgCarbRate.toFixed(0)) + 5} g/hr in your next long session. Remember to increase gradually!`;
+      const { avg } = calculateFilteredAvgCarb(mockSessions);
+      return `Your current average is around ${avg.toFixed(0)} g/hr. A good next step is to target about ${Number(avg.toFixed(0)) + 5} g/hr in your next long session. Remember to increase gradually!`;
     }
     return "That's a great question. For specific product recommendations or complex issues, consulting a human sports nutritionist is best. I can help you analyze your logged sessions and plan your progression.";
   };
@@ -415,6 +448,206 @@ const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ titl
 // Main App Component (View Controller)
 // ============================================================================
 
+interface EventDetails {
+  name: string;
+  date: string; // ISO
+  type: string;
+  targetCarb: number;
+}
+
+const EventDayPlanner: React.FC<{ sessions: Session[]; onBack: () => void }> = ({
+  sessions,
+  onBack,
+}) => {
+  // persist event details
+  const [event, setEvent] = useLocalStorage<EventDetails>('noominds-event', {
+    name: '',
+    date: '',
+    type: 'Cycling',
+    targetCarb: 90,
+  });
+
+  // form local state for edits
+  const [draft, setDraft] = useState<EventDetails>(event);
+  const [editing, setEditing] = useState(!event.name); // if empty, open edit mode
+
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setDraft((p) => ({ ...p, [name]: name === 'targetCarb' ? Number(value) : value }));
+  };
+
+  const saveEvent = () => {
+    setEvent(draft);
+    setEditing(false);
+  };
+
+  // --- metrics ---
+  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(sessions);
+
+  const target = draft.targetCarb || 1; // avoid /0
+  const readiness = Math.min(100, Math.round((avgCarb / target) * 100));
+
+  const daysUntil =
+    draft.date
+      ? Math.ceil(
+          (new Date(draft.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        )
+      : NaN;
+
+  let statusColor = 'bg-red-500';
+  if (avgCarb >= target) statusColor = 'bg-green-600';
+  else if (target - avgCarb <= 10) statusColor = 'bg-yellow-500';
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Event Day Planner</h1>
+        <p className="mt-2 text-lg text-slate-600">
+          Track readiness for your upcoming event.
+        </p>
+      </header>
+
+      {editing ? (
+        <div className="card space-y-6">
+          <div>
+            <label className="form-label">Event Name</label>
+            <input
+              type="text"
+              name="name"
+              value={draft.name}
+              onChange={handleChange}
+              className="form-input w-full"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">Event Date</label>
+              <input
+                type="date"
+                name="date"
+                value={draft.date}
+                onChange={handleChange}
+                className="form-input w-full"
+              />
+            </div>
+            <div>
+              <label className="form-label">Event Type</label>
+              <select
+                name="type"
+                value={draft.type}
+                onChange={handleChange}
+                className="form-select w-full"
+              >
+                <option>Cycling</option>
+                <option>Running</option>
+                <option>Triathlon</option>
+                <option>Swimming</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="form-label">
+              Target Carb Intake (g/hr)
+            </label>
+            <input
+              type="number"
+              name="targetCarb"
+              value={draft.targetCarb}
+              onChange={handleChange}
+              className="form-input w-full"
+            />
+          </div>
+          <div className="flex justify-between pt-4 border-t">
+            <button
+              className="btn btn-outline"
+              onClick={() => setEditing(false)}
+            >
+              Cancel
+            </button>
+            <button className="btn btn-primary" onClick={saveEvent}>
+              Save Event
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="card space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">
+              {event.name || 'Unnamed Event'}
+            </h2>
+            <button
+              className="text-sm underline"
+              style={{ color: '#EF6A3E' }}
+              onClick={() => setEditing(true)}
+            >
+              Edit
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-slate-100">
+              <p className="text-sm text-slate-500">Days Until Event</p>
+              <p className="text-3xl font-bold text-slate-800">
+                {isNaN(daysUntil) ? '--' : daysUntil}
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-slate-100">
+              <p className="text-sm text-slate-500">Target Carb Rate</p>
+              <p className="text-3xl font-bold text-slate-800">
+                {event.targetCarb}
+                <span className="text-lg font-medium text-slate-500">
+                  g/hr
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm text-slate-500">
+              Current Avg. vs Target (from {longSessionsCount} sessions &gt; 60 min)
+            </p>
+            <div className="w-full h-6 bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${statusColor}`}
+                style={{ width: `${readiness}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs mt-1">
+              <span>{avgCarb.toFixed(0)} g/hr</span>
+              <span>{readiness}% ready</span>
+            </div>
+          </div>
+
+          <div
+            className={`p-3 rounded-md text-white text-center ${
+              statusColor === 'bg-green-600'
+                ? 'bg-green-600'
+                : statusColor === 'bg-yellow-500'
+                ? 'bg-yellow-500'
+                : 'bg-red-500'
+            }`}
+          >
+            {statusColor === 'bg-green-600'
+              ? '✅ You are event-ready!'
+              : statusColor === 'bg-yellow-500'
+              ? '⚠️ Almost there – keep pushing!'
+              : '🚨 Need more gut training – increase carbs steadily.'}
+          </div>
+        </div>
+      )}
+
+      <div className="text-center mt-6">
+        <button onClick={onBack} className="btn btn-primary">
+          Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function App() {
   // This state controls which "page" is visible.
   const [currentView, setCurrentView] = useState<AppView>('dashboard');
@@ -423,6 +656,9 @@ function App() {
   const addSession = (newSession: Session) => {
     setSessions(prev => [...prev, newSession]);
   };
+
+  // --- derived average carb intake ---
+  const { avg: avgCarb, count: longSessionsCount } = calculateFilteredAvgCarb(sessions);
 
   const navigateTo = (view: AppView) => setCurrentView(view);
 
@@ -435,11 +671,22 @@ function App() {
         return <SessionLogger onAddSession={addSession} onBack={() => navigateTo('dashboard')} />;
       case 'progress':
         return <PlaceholderPage title="Your Progress" onBack={() => navigateTo('dashboard')} />;
+      case 'event_planner':
+        return (
+          <EventDayPlanner sessions={sessions} onBack={() => navigateTo('dashboard')} />
+        );
       case 'ai_coach':
         return <AICoach onBack={() => navigateTo('dashboard')} />;
       case 'dashboard':
       default:
-        return <Dashboard onNavigate={navigateTo} sessionsCount={sessions.length} />;
+        return (
+          <Dashboard
+            onNavigate={navigateTo}
+            sessionsCount={sessions.length}
+            avgCarb={avgCarb}
+            longSessionsCount={longSessionsCount}
+          />
+        );
     }
   };
 
