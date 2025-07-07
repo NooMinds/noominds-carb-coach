@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ChangeEvent, FormEvent, useRef } from 'react';
 import './index.css'; // Make sure our styles are imported
 
@@ -5,7 +6,7 @@ import './index.css'; // Make sure our styles are imported
 // Type Definitions
 // ============================================================================
 
-// Utility: consistent short-date formatter (e.g., "Jun 20")
+// Utility: consistent short-date formatter (e.g., “Jun 20”)
 const formatShortDate = (isoDate: string) =>
   new Date(isoDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -76,12 +77,12 @@ const Header: React.FC = () => (
   <header className="bg-slate-800 text-white shadow-md">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
       <div className="flex items-center">
-        <div className="w-6 h-6 mr-3 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{backgroundColor: '#EF6A3E'}}>
+        <div className="w-8 h-8 mr-3 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{backgroundColor: '#EF6A3E'}}>
           N
         </div>
         <span className="text-2xl font-bold">NooMinds</span>
       </div>
-      <p className="hidden sm:block text-sm text-slate-300">Fuel Smarter. Perform Better.</p>
+      {/* Tagline removed as per user request */}
     </div>
   </header>
 );
@@ -89,7 +90,7 @@ const Header: React.FC = () => (
 const Footer: React.FC = () => (
   <footer className="bg-slate-800 text-slate-400 text-xs text-center py-4 mt-12">
     <p>&copy; {new Date().getFullYear()} NooMinds Ltd. All Rights Reserved.</p>
-    <a href="https://www.noominds.com" target="_blank" rel="noopener noreferrer" className="hover:text-teal-400 transition-colors" style={{color: '#EF6A3E'}}>
+    <a href="https://www.noominds.com" target="_blank" rel="noopener noreferrer" className="hover:text-brand-orange transition-colors" style={{color: '#EF6A3E'}}>
       www.noominds.com
     </a>
   </footer>
@@ -239,7 +240,6 @@ const AICoach: React.FC<AICoachProps> = ({ sessions, onBackToDashboard }) => {
   
   useEffect(() => {
     if (messages.length === 0) {
-      // Initial welcome message if chat history is empty
       const welcomeMessage: Message = {
         id: 'welcome',
         text: "Hi Craig! I'm Coach Noo, your AI gut training assistant. I have access to your training data. How can I help you today?",
@@ -251,395 +251,178 @@ const AICoach: React.FC<AICoachProps> = ({ sessions, onBackToDashboard }) => {
   }, []);
 
   const getAIResponse = async (userInput: string, userSessions: Session[]): Promise<string> => {
-  const lastSession = userSessions.length > 0 ? userSessions[userSessions.length - 1] : null;
-  const lowerCaseInput = userInput.toLowerCase();
-  
-  // Calculate user's training patterns
-  const avgCarbRate = userSessions.length > 0 ? 
-    (userSessions.reduce((sum, s) => sum + (s.duration > 0 ? s.carbs / (s.duration / 60) : 0), 0) / userSessions.length) : 45;
-  const avgSymptoms = userSessions.length > 0 ? 
-    (userSessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / userSessions.length) : 0;
-  const recentSessions = userSessions.slice(-3); // Last 3 sessions
-  const improvementTrend = recentSessions.length >= 2 ? 
-    recentSessions[recentSessions.length - 1].symptomSeverity - recentSessions[0].symptomSeverity : 0;
-
-  // --- Placeholder for real OpenAI API call ---
-  /*
-  const OPENAI_API_KEY = 'YOUR_API_KEY_HERE';
-  const prompt = `
-    You are Coach Noo, an expert sports nutrition AI specializing in gut training for endurance athletes.
-    User question: "${userInput}"
+    const lastSession = userSessions.length > 0 ? userSessions[userSessions.length - 1] : null;
+    const lowerCaseInput = userInput.toLowerCase();
     
-    User's profile:
-    - Average carb rate: ${avgCarbRate.toFixed(1)} g/hr
-    - Average symptom severity: ${avgSymptoms.toFixed(1)}/10
-    - Recent trend: ${improvementTrend > 0 ? 'symptoms increasing' : improvementTrend < 0 ? 'symptoms improving' : 'stable'}
-    - Total sessions logged: ${userSessions.length}
-    
-    Recent training data: ${JSON.stringify(recentSessions, null, 2)}
-    
-    Provide expert, personalized advice based on current gut training research.
-  `;
+    const avgCarbRate = userSessions.length > 0 ? 
+      (userSessions.reduce((sum, s) => sum + (s.duration > 0 ? s.carbs / (s.duration / 60) : 0), 0) / userSessions.length) : 45;
+    const avgSymptoms = userSessions.length > 0 ? 
+      (userSessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / userSessions.length) : 0;
+    const recentSessions = userSessions.slice(-3);
+    const improvementTrend = recentSessions.length >= 2 ? 
+      recentSessions[recentSessions.length - 1].symptomSeverity - recentSessions[0].symptomSeverity : 0;
 
-  try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-    const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
-    console.error("Error calling OpenAI API:", error);
-    return "I'm having trouble connecting right now. Please try again later.";
-  }
-  */
-
-  // --- Enhanced AI Response Logic ---
-
-  // SESSION ANALYSIS
-  if (lowerCaseInput.includes("analyze") && lowerCaseInput.includes("last session")) {
-    if (lastSession) {
-      const carbRate = lastSession.duration > 0 ? (lastSession.carbs / (lastSession.duration / 60)).toFixed(0) : 'N/A';
-      const performance = lastSession.rpe <= 5 ? "easy" : lastSession.rpe <= 7 ? "moderate" : "hard";
-      const sessionFeedback = lastSession.symptomSeverity <= 2 ? "excellent tolerance" : 
-                            lastSession.symptomSeverity <= 5 ? "manageable symptoms" : "challenging session";
+    // --- Placeholder for real OpenAI API call ---
+    /*
+    const OPENAI_API_KEY = 'YOUR_API_KEY_HERE';
+    const prompt = `
+      You are Coach Noo, an expert sports nutrition AI specializing in gut training for endurance athletes.
+      User question: "${userInput}"
       
-      return `📊 **Analysis of your ${formatShortDate(lastSession.date)} session:**
+      User's profile:
+      - Average carb rate: ${avgCarbRate.toFixed(1)} g/hr
+      - Average symptom severity: ${avgSymptoms.toFixed(1)}/10
+      - Recent trend: ${improvementTrend > 0 ? 'symptoms increasing' : improvementTrend < 0 ? 'symptoms improving' : 'stable'}
+      - Total sessions logged: ${userSessions.length}
+      
+      Recent training data: ${JSON.stringify(recentSessions, null, 2)}
+      
+      Provide expert, personalized advice based on current gut training research.
+    `;
 
-**The Numbers:**
-- ${lastSession.sport} for ${lastSession.duration} mins (${performance} effort)
-- Carb rate: ${carbRate} g/hr
-- Hydration: ${lastSession.fluids}ml
-- Symptom score: ${lastSession.symptomSeverity}/10 (${sessionFeedback})
-
-**What this tells me:**
-${carbRate !== 'N/A' && Number(carbRate) >= 60 ? `✅ Strong carb intake rate - you're in the optimal range for endurance performance.` : `⚠️ Room to increase carb intake - aim for 60-90g/hr for sessions over 90 mins.`}
-
-${lastSession.symptomSeverity <= 3 ? `🎯 Your gut handled this well! Consider pushing carbs by 5-10g/hr next time.` : `🔧 Some GI stress noted. Next session, try smaller, more frequent doses.`}
-
-**Next steps:** ${lastSession.symptomSeverity <= 2 ? "You're ready to progress!" : "Focus on consistency at this level first."}`;
+    try {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+        body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'user', content: prompt }] }),
+      });
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error("Error calling OpenAI API:", error);
+      return "I'm having trouble connecting right now. Please try again later.";
     }
-    return "Log a session first, and I'll provide detailed analysis of your performance and gut tolerance!";
-  }
+    */
 
-  // GI TROUBLESHOOTING
-  if (lowerCaseInput.includes("bloated") || lowerCaseInput.includes("nausea") || lowerCaseInput.includes("stomach")) {
-    const commonIssues = lowerCaseInput.includes("bloated") ? "bloating" : 
-                        lowerCaseInput.includes("nausea") ? "nausea" : "stomach issues";
-    
-    return `💡 **Dealing with ${commonIssues}? Here's your action plan:**
+    // --- Enhanced AI Response Logic ---
+    if (lowerCaseInput.includes("analyze") && lowerCaseInput.includes("last session")) {
+      if (lastSession) {
+        const carbRate = lastSession.duration > 0 ? (lastSession.carbs / (lastSession.duration / 60)).toFixed(0) : 'N/A';
+        const performance = lastSession.rpe <= 5 ? "easy" : lastSession.rpe <= 7 ? "moderate" : "hard";
+        const sessionFeedback = lastSession.symptomSeverity <= 2 ? "excellent tolerance" : lastSession.symptomSeverity <= 5 ? "manageable symptoms" : "challenging session";
+        return `📊 **Analysis of your ${formatShortDate(lastSession.date)} session:**\n\n**The Numbers:**\n- ${lastSession.sport} for ${lastSession.duration} mins (${performance} effort)\n- Carb rate: ${carbRate} g/hr\n- Hydration: ${lastSession.fluids}ml\n- Symptom score: ${lastSession.symptomSeverity}/10 (${sessionFeedback})\n\n**What this tells me:**\n${carbRate !== 'N/A' && Number(carbRate) >= 60 ? `✅ Strong carb intake rate - you're in the optimal range for endurance performance.` : `⚠️ Room to increase carb intake - aim for 60-90g/hr for sessions over 90 mins.`}\n\n${lastSession.symptomSeverity <= 3 ? `🎯 Your gut handled this well! Consider pushing carbs by 5-10g/hr next time.` : `🔧 Some GI stress noted. Next session, try smaller, more frequent doses.`}\n\n**Next steps:** ${lastSession.symptomSeverity <= 2 ? "You're ready to progress!" : "Focus on consistency at this level first."}`;
+      }
+      return "Log a session first, and I'll provide detailed analysis!";
+    }
 
-**Immediate fixes:**
-1. **Slow your intake pace** - Try 15-20g every 15 mins instead of larger doses
-2. **Dilute your drinks** - Too concentrated = slower gastric emptying
-3. **Check the temperature** - Cool (not ice cold) fluids empty faster
-4. **Reduce intensity briefly** - High intensity shunts blood from your gut
+    if (lowerCaseInput.includes("bloated") || lowerCaseInput.includes("nausea") || lowerCaseInput.includes("stomach")) {
+      const commonIssues = lowerCaseInput.includes("bloated") ? "bloating" : lowerCaseInput.includes("nausea") ? "nausea" : "stomach issues";
+      return `💡 **Dealing with ${commonIssues}? Here's your action plan:**\n\n**Immediate fixes:**\n1. **Slow your intake pace** - Try 15-20g every 15 mins instead of larger doses\n2. **Dilute your drinks** - Too concentrated = slower gastric emptying\n3. **Check the temperature** - Cool (not ice cold) fluids empty faster\n\n**Product strategy:**\n- Stick to glucose/maltodextrin for now (easier to digest)\n- Avoid fructose until your gut adapts\n\nYour symptoms are normal during gut training - you're literally teaching your gut to work harder! 💪`;
+    }
 
-**Product strategy:**
-- Stick to glucose/maltodextrin for now (easier to digest)
-- Avoid fructose until your gut adapts
-- Try isotonic drinks (6-8% carb concentration)
+    if (lowerCaseInput.includes("product") || lowerCaseInput.includes("recommend")) {
+      return `🥤 **Fueling product recommendations for your ${avgCarbRate.toFixed(0)}g/hr target:**\n\n**Sports Drinks:**\n- Maurten 320: 79g carbs per 500ml\n- SiS Beta Fuel: 80g per 500ml (2:1 ratio)\n\n**Gels:**\n- Maurten Gel 100: 25g carbs\n- SiS Beta Fuel gel: 40g carbs\n\n**For your current level:**\n${avgCarbRate < 50 ? "Start with 1 gel every 30 mins + sports drink" : "Try 1 gel every 20 mins + concentrated sports drink"}\n\n**Pro tip:** Test everything in training first!`;
+    }
 
-**Prevention for next time:**
-- Start fueling within first 15-20 minutes
-- Practice the "little and often" approach
-- Don't try new products on hard training days
+    if (lowerCaseInput.includes("target") || lowerCaseInput.includes("next") || lowerCaseInput.includes("goal")) {
+      const nextTarget = Math.min(Number(avgCarbRate) + 10, 120);
+      return `🎯 **Your personalized progression plan:**\n\n**Current status:** ${avgCarbRate.toFixed(0)}g/hr average\n**Next target:** ${nextTarget}g/hr\n**Strategy:** ${nextTarget <= 60 ? "Add 1 extra gel per long session" : "Increase drink concentration + maintain gel frequency"}\n\n${improvementTrend < 0 ? "🔥 Great news - your symptoms are improving! You're adapting well." : "📈 You're maintaining good consistency. Ready to progress!"}`;
+    }
 
-Your symptoms are normal during gut training - you're literally teaching your gut to work harder! 💪`;
-  }
+    if (lowerCaseInput.includes("race") || lowerCaseInput.includes("event")) {
+      const raceRate = Math.min(avgCarbRate * 0.9, 90);
+      return `🏁 **Race day fueling strategy:**\n\n**Your race carb target:** ${raceRate.toFixed(0)}g/hr\n\n**Pre-race (2-3 hours before):**\n- 1-4g carbs per kg body weight\n- Familiar foods only\n\n**During race:**\n- Start at 15-20 minutes\n- Set watch alarms every 15-20 minutes as reminders\n\nNever try anything new on race day!`;
+    }
 
-  // PRODUCT RECOMMENDATIONS
-  if (lowerCaseInput.includes("gel") || lowerCaseInput.includes("drink") || lowerCaseInput.includes("product") || lowerCaseInput.includes("recommend")) {
-    const currentRate = avgCarbRate.toFixed(0);
-    
-    return `🥤 **Fueling product recommendations for your ${currentRate}g/hr target:**
-
-**Sports Drinks (Best for hydration + carbs):**
-- Maurten 320: 79g carbs per 500ml (perfect for high rates)
-- SiS Beta Fuel: 80g per 500ml (2:1 glucose:fructose)
-- Precision Hydration PH 1500: Customizable carb content
-
-**Gels (Convenient dosing):**
-- Maurten Gel 100: 25g carbs (easy on stomach)
-- SiS Beta Fuel gel: 40g carbs (if tolerating higher doses)
-- Spring Energy: Real food options
-
-**For your current level:**
-${Number(currentRate) < 50 ? "Start with 1 gel every 30 mins + sports drink" : 
-  Number(currentRate) < 70 ? "Try 1 gel every 20 mins + concentrated sports drink" : 
-  "You're at advanced levels - consider mixing gels + drinks + solid food"}
-
-**Pro tip:** Test everything in training first. Your gut needs to learn each product! 🎯`;
-  }
-
-  // TRAINING PROGRESSION
-  if (lowerCaseInput.includes("target") || lowerCaseInput.includes("next") || lowerCaseInput.includes("progress") || lowerCaseInput.includes("goal")) {
-    const nextTarget = Math.min(Number(avgCarbRate) + 10, 120);
-    const timeframe = avgSymptoms < 3 ? "1-2 weeks" : "2-3 weeks";
-    
-    return `🎯 **Your personalized progression plan:**
-
-**Current status:** ${avgCarbRate.toFixed(0)}g/hr average (${avgSymptoms < 3 ? "good tolerance" : "building tolerance"})
-
-**Next target:** ${nextTarget}g/hr
-**Timeline:** ${timeframe}
-**Strategy:** ${nextTarget <= 60 ? "Add 1 extra gel per long session" : 
-            nextTarget <= 90 ? "Increase drink concentration + maintain gel frequency" : 
-            "Advanced protocol - combine multiple carb sources"}
-
-**Weekly plan:**
-- Week 1: Practice current rate (${avgCarbRate.toFixed(0)}g/hr) in 2 sessions
-- Week 2: Push to ${(Number(avgCarbRate) + 5).toFixed(0)}g/hr in 1 session, maintain current in 1 session
-- Week 3: Target ${nextTarget}g/hr in your long session
-
-${improvementTrend < 0 ? "🔥 Great news - your symptoms are improving! You're adapting well." : 
-  improvementTrend > 0 ? "⏳ Take it steady - recent sessions show increased symptoms. Consolidate current level." : 
-  "📈 You're maintaining good consistency. Ready to progress!"}
-
-Remember: Gut training is like fitness training - progressive overload! 💪`;
-  }
-
-  // RACE STRATEGY
-  if (lowerCaseInput.includes("race") || lowerCaseInput.includes("event") || lowerCaseInput.includes("competition")) {
-    const raceRate = Math.min(avgCarbRate * 0.9, 90); // Conservative for race day
-    
-    return `🏁 **Race day fueling strategy:**
-
-**Your race carb target:** ${raceRate.toFixed(0)}g/hr (90% of your training max)
-
-**Pre-race (2-3 hours before):**
-- 1-4g carbs per kg body weight
-- Familiar foods only
-- Stop eating 2-3 hours before start
-
-**During race fueling schedule:**
-- Start at 15-20 minutes (don't wait until you're hungry!)
-- ${raceRate <= 60 ? "1 gel every 45 mins + sports drink" : "1 gel every 30 mins + concentrated drink"}
-- Set watch alarms every 15-20 minutes as reminders
-
-**Emergency protocols:**
-- If GI distress hits: slow down, take smaller sips, lower intensity briefly
-- Always carry backup gels
-- Never try anything new on race day!
-
-**Final weeks preparation:**
-- Practice race pace + race fueling in your final long sessions
-- Test your full race day breakfast
-- Rehearse your fueling timing
-
-You've got this! Your training data shows you can handle ${avgCarbRate.toFixed(0)}g/hr, so ${raceRate.toFixed(0)}g/hr should feel comfortable. 🚀`;
-  }
-
-  // EDUCATION & SCIENCE
-  if (lowerCaseInput.includes("why") || lowerCaseInput.includes("how") || lowerCaseInput.includes("science") || lowerCaseInput.includes("explain")) {
-    if (lowerCaseInput.includes("gut train") || lowerCaseInput.includes("adapt")) {
-      return `🧠 **The science of gut training:**
-
-**What happens when you gut train:**
-1. **Increased SGLT1 transporters** - More "doors" for glucose to enter your bloodstream
-2. **Faster gastric emptying** - Your stomach learns to process larger volumes
-3. **Enhanced blood flow** - Better circulation to digestive organs during exercise
-4. **Improved glucose oxidation** - Your muscles become better at using the fuel
-
-**Why it takes time:**
-- Transporter upregulation: 1-2 weeks
-- Gastric adaptation: 2-4 weeks
-- Full metabolic adaptation: 4-8 weeks
-
-**The 60g/hr "ceiling":**
-This was old science! We now know with gut training you can absorb:
-- 60-90g/hr with single carb sources
-- 90-120g/hr+ with multiple carb types (glucose + fructose)
-
-**Your body uses different "highways":**
-- Glucose highway (SGLT1): ~60g/hr capacity
-- Fructose highway (GLUT5): ~30g/hr capacity
-- Combined = up to 90g/hr absorption!
-
-This is why products like Maurten use 2:1 ratios - they're using both highways! 🛣️`;
+    if (lowerCaseInput.includes("why") || lowerCaseInput.includes("how") || lowerCaseInput.includes("science")) {
+      return `🧠 **The science of gut training:**\n\nWhen you gut train, you increase SGLT1 transporters (more "doors" for glucose), speed up gastric emptying, and improve glucose oxidation. This allows you to absorb more carbs (90-120g/hr with multiple types like glucose + fructose) and perform better. Your body is literally learning to be more efficient!`;
     }
     
-    return `💡 **Great question!** I love curious athletes. Could you be more specific? Ask me about:
-- "Why does gut training work?"
-- "How do carbs get absorbed?"
-- "Why do I get stomach issues?"
-- "How much should I drink?"
+    return `🤔 **Interesting question!** I'm best at:\n- **Training analysis:** "Analyze my last session"\n- **Progression planning:** "What's my next target?" \n- **Problem solving:** "I'm getting bloated"\n- **Product advice:** "What gels work best?"\n\nHow can I help you fuel smarter? 🚀`;
+  };
 
-I'm here to geek out on sports nutrition science with you! 🤓`;
-  }
+  const handleSend = async (messageText?: string) => {
+    const text = messageText || input;
+    if (!text.trim()) return;
 
-  // TIMING & FREQUENCY
-  if (lowerCaseInput.includes("when") || lowerCaseInput.includes("timing") || lowerCaseInput.includes("start")) {
-    return `⏰ **Timing is everything in gut training:**
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text,
+      sender: 'user',
+      timestamp: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsTyping(true);
 
-**During training sessions:**
-- **Start early:** 15-20 minutes in (don't wait to feel hungry!)
-- **Little & often:** Every 15-20 minutes vs. large doses
-- **Front-load:** Take more early when your gut is fresh
-
-**Training frequency:**
-- **Minimum:** 1 gut training session per week
-- **Optimal:** 2 sessions per week
-- **Focus sessions:** Long rides/runs (90+ minutes)
-
-**Weekly timing:**
-- Session 1: Conservative practice (your current comfortable rate)
-- Session 2: Progressive overload (push boundaries by 5-10g/hr)
-
-**Seasonal timing:**
-- **Base phase:** Build gut capacity gradually
-- **Build phase:** Practice race-specific fueling
-- **Peak phase:** Perfect your race day protocol
-
-**Your current pattern analysis:**
-${userSessions.length >= 3 ? `You're logging sessions regularly - excellent consistency! ${recentSessions.every(s => s.symptomSeverity <= 4) ? "Your gut is adapting well." : "Some sessions showing higher symptoms - consider spacing them out more."}` : "Try to log at least 1-2 gut training sessions per week for optimal adaptation."}
-
-Consistency beats intensity in gut training! 📅`;
-  }
-
-  // HYDRATION QUESTIONS
-  if (lowerCaseInput.includes("water") || lowerCaseInput.includes("hydration") || lowerCaseInput.includes("drink") || lowerCaseInput.includes("thirsty")) {
-    const avgFluids = userSessions.length > 0 ? 
-      (userSessions.reduce((sum, s) => sum + s.fluids, 0) / userSessions.length) : 500;
+    const aiResponseText = await getAIResponse(text, sessions);
     
-    return `💧 **Hydration strategy for endurance athletes:**
+    setTimeout(() => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: aiResponseText,
+        sender: 'ai',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 1200);
+  };
 
-**Your current intake:** ${avgFluids.toFixed(0)}ml per session average
+  const suggestionPrompts = [
+    "Analyze my last session",
+    "What's my next carb target?",
+    "What should I do if I feel bloated?",
+  ];
 
-**General guidelines:**
-- **Moderate conditions:** 400-800ml per hour
-- **Hot conditions:** 600-1200ml per hour
-- **Cold conditions:** 300-600ml per hour
+  return (
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">AI Chat Coach</h1>
+        <p className="mt-2 text-lg text-slate-600">Ask "Coach Noo" anything about your gut training journey.</p>
+      </header>
 
-**Electrolyte targets:**
-- **Sodium:** 300-700mg per hour (more if heavy sweater)
-- **Start with:** 500mg/hour and adjust based on how you feel
+      <div className="card h-[70vh] flex flex-col">
+        <div className="flex-grow overflow-y-auto pr-4 -mr-4 space-y-4">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex items-end gap-2 ${msg.sender === 'user' ? 'justify-end' : ''}`}>
+              {msg.sender === 'ai' && <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">AI</div>}
+              <div className={`max-w-md p-3 rounded-lg ${msg.sender === 'user' ? 'text-white' : 'bg-slate-100'}`} style={msg.sender === 'user' ? {backgroundColor: '#EF6A3E'} : {}}>
+                <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                <p className="text-xs opacity-70 mt-1 text-right">{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+              {msg.sender === 'user' && <div className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 text-sm font-bold" style={{backgroundColor: '#EF6A3E'}}>CE</div>}
+            </div>
+          ))}
+          {isTyping && (
+            <div className="flex items-end gap-2">
+              <div className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center flex-shrink-0 text-sm font-bold">AI</div>
+              <div className="max-w-md p-3 rounded-lg bg-slate-100">
+                <div className="flex items-center gap-1">
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></span>
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></span>
+                  <span className="h-2 w-2 bg-slate-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-**Practical tips:**
-- Sip every 10-15 minutes (small, frequent = better absorption)
-- Cool fluids (15-20°C) empty faster than warm or ice-cold
-- If you're sloshing, you're drinking too much too fast
-
-**Signs you need more:**
-- Dark yellow urine pre-session
-- Cramping during exercise
-- Feeling flat despite good carb intake
-
-**Your hydration status:**
-${avgFluids < 400 ? "⚠️ Consider increasing fluid intake - aim for 500-700ml/hour" : 
-  avgFluids > 1000 ? "💡 You might be over-hydrating - try reducing slightly and see how you feel" : 
-  "✅ Good hydration range - you're in the sweet spot!"}
-
-Remember: Thirst lags behind need by 1-2% dehydration! 🏃‍♂️`;
-  }
-
-  // PROBLEM-SOLVING & SPECIFIC ISSUES
-  if (lowerCaseInput.includes("cramping") || lowerCaseInput.includes("cramp")) {
-    return `⚡ **Cramping solutions:**
-
-**Likely causes:**
-1. **Electrolyte imbalance** (most common)
-2. **Dehydration** 
-3. **Too much carb too fast** (GI cramping)
-4. **Muscle fatigue**
-
-**Immediate fixes:**
-- Slow down intensity for 2-3 minutes
-- Take small sips of electrolyte drink
-- Gentle stretching if safe to do so
-
-**Prevention strategy:**
-- Increase sodium intake to 500-700mg/hour
-- Practice your fueling protocol in training
-- Stay ahead of hydration (don't wait until thirsty)
-
-**Electrolyte math:**
-Most sports drinks = 200-300mg sodium per 500ml. You might need additional salt tablets or higher concentration drinks.
-
-Try this for your next session! 💪`;
-  }
-
-  if (lowerCaseInput.includes("energy") || lowerCaseInput.includes("tired") || lowerCaseInput.includes("fatigue")) {
-    return `⚡ **Energy optimization:**
-
-**Energy dips during exercise usually mean:**
-1. **Insufficient carb rate** (most common)
-2. **Poor timing** (waiting too long to start)
-3. **Wrong carb type** (pure fructose = slower absorption)
-4. **Dehydration** affecting performance
-
-**Your energy audit:**
-- Current carb rate: ${avgCarbRate.toFixed(0)}g/hr
-- Recommended for sustained energy: 60-90g/hr for sessions >90 mins
-
-**Quick wins:**
-- Start fueling earlier (15-20 min mark)
-- Increase frequency: every 15-20 mins vs waiting
-- Try glucose/maltodextrin products for faster absorption
-
-**Energy timeline:**
-- 0-60 mins: Muscle glycogen powers you
-- 60-90 mins: Transition phase (start feeling it)
-- 90+ mins: External carbs become critical
-
-You should feel strong and energetic throughout your sessions with proper fueling! 🔋`;
-  }
-
-  // GENERAL ENCOURAGEMENT & DEFAULT
-  if (lowerCaseInput.includes("help") || lowerCaseInput.includes("stuck") || lowerCaseInput.includes("difficult")) {
-    return `🤝 **I'm here to help!** Gut training can be challenging, but you're making progress.
-
-**Remember:**
-- Every athlete's gut is different
-- Adaptation takes 4-8 weeks
-- Small, consistent improvements win
-
-**I can help with:**
-- Session analysis ("analyze my last session")
-- Product recommendations ("what gels should I use?")
-- Race strategy ("help me plan race fueling")
-- Troubleshooting ("I'm getting bloated")
-- Training progression ("what's my next target?")
-
-**Your progress so far:**
-- ${userSessions.length} sessions logged (great commitment!)
-- ${avgCarbRate.toFixed(0)}g/hr average (${avgCarbRate >= 60 ? "excellent!" : "building nicely!"})
-- ${improvementTrend <= 0 ? "Symptoms stable/improving" : "Working through adaptation"}
-
-Keep going - you've got this! What specific challenge can I help you tackle? 💪`;
-  }
-
-  // CATCH-ALL INTELLIGENT RESPONSE
-  return `🤔 **Interesting question!** I'm constantly learning about sports nutrition and gut training.
-
-**Based on your training data:**
-- You're averaging ${avgCarbRate.toFixed(0)}g/hr carb intake
-- Your symptom trends are ${improvementTrend <= 0 ? "improving" : "stabilizing"}
-- You've logged ${userSessions.length} sessions (solid commitment!)
-
-**I'm most helpful with:**
-- **Training analysis:** "Analyze my last session"
-- **Progression planning:** "What's my next target?"
-- **Problem solving:** "I'm getting bloated during training"
-- **Product advice:** "What gels work best?"
-- **Race preparation:** "Help me plan race day fueling"
-
-**Ask me anything about:**
-✅ Gut training protocols
-✅ Carb absorption science  
-✅ Product recommendations
-✅ Hydration strategies
-✅ Race day planning
-✅ Troubleshooting GI issues
-
-What would you like to explore? I love geeking out on sports nutrition! 🚀`;
+        <div className="pt-4 mt-4 border-t">
+          <div className="flex flex-wrap gap-2 mb-3">
+            {suggestionPrompts.map(prompt => (
+              <button key={prompt} onClick={() => handleSend(prompt)} className="btn btn-outline text-xs !py-1 !px-2">{prompt}</button>
+            ))}
+          </div>
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask a question..."
+              className="form-input flex-grow"
+              disabled={isTyping}
+            />
+            <button type="submit" className="btn btn-primary" disabled={isTyping || !input.trim()}>Send</button>
+          </form>
+        </div>
+      </div>
+       <div className="text-center mt-6">
+        <button onClick={onBackToDashboard} className="btn btn-primary">Back to Dashboard</button>
+      </div>
+    </div>
+  );
 };
 
 
@@ -885,3 +668,4 @@ const ProgressCharts: React.FC<ProgressChartsProps> = ({ sessions, onBackToDashb
 };
 
 export default App;
+```
