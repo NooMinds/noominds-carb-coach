@@ -1,144 +1,162 @@
 @tailwind base;
-@tailwind components;  
+@tailwind components;
 @tailwind utilities;
 
-/* Modern Sports App Theme - TrainingPeaks/Garmin Connect Style */
-@layer base {
-  body {
-    @apply bg-slate-900 text-white font-sans;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-white;
-  }
+/* Dark Sports Theme */
+body {
+  background-color: #0f172a;
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-@layer components {
-  /* Modern Card Styles */
-  .card {
-    @apply bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700 hover:border-slate-600 transition-all duration-300;
-  }
-  
-  .card-gradient {
-    @apply bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 shadow-xl border border-slate-700;
-  }
-  
-  .metric-card {
-    @apply bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700 hover:shadow-2xl transition-all duration-300;
-  }
-  
-  /* Modern Button Styles */
-  .btn {
-    @apply inline-flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-all duration-300 cursor-pointer;
-  }
-  
-  .btn-primary {
-    @apply bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl;
-  }
-  
-  .btn-secondary {
-    @apply bg-slate-700 text-white hover:bg-slate-600 border border-slate-600 hover:border-slate-500;
-  }
-  
-  .btn-outline {
-    @apply bg-transparent text-orange-500 border-2 border-orange-500 hover:bg-orange-500 hover:text-white;
-  }
-  
-  /* Form Styles */
-  .form-input {
-    @apply w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all;
-  }
-  
-  .form-select {
-    @apply w-full bg-slate-800 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 transition-all;
-  }
-  
-  .form-checkbox {
-    @apply w-5 h-5 text-orange-500 bg-slate-800 border-slate-600 rounded focus:ring-orange-500 focus:ring-2;
-  }
-  
-  .form-label {
-    @apply block text-sm font-medium text-slate-300 mb-2;
-  }
-  
-  /* Gradient Text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent;
-  }
-  
-  /* Action Cards */
-  .action-card {
-    @apply bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700 hover:border-orange-500/50 transition-all duration-300 cursor-pointer group;
-  }
-  
-  .action-card-primary {
-    @apply bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/30 ring-2 ring-orange-500/20;
-  }
-  
-  /* Progress Bars */
-  .progress-bar {
-    @apply w-full h-3 bg-slate-700 rounded-full overflow-hidden;
-  }
-  
-  .progress-fill {
-    @apply h-full bg-gradient-to-r from-orange-500 to-orange-600 transition-all duration-500;
-  }
-  
-  /* Status Indicators */
-  .status-good {
-    @apply bg-green-500/20 text-green-400 border border-green-500/30;
-  }
-  
-  .status-warning {
-    @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
-  }
-  
-  .status-danger {
-    @apply bg-red-500/20 text-red-400 border border-red-500/30;
-  }
-  
-  /* Responsive Grid */
-  .metrics-grid {
-    @apply grid grid-cols-1 md:grid-cols-3 gap-6;
-  }
-  
-  .actions-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-6;
-  }
+/* Orange gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Custom Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Card styles */
+.card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
-@keyframes slideIn {
-  from { transform: translateX(-20px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+/* Button styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
+.btn-primary {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
 }
 
-.animate-slide-in {
-  animation: slideIn 0.3s ease-out;
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ea580c, #dc2626);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(249, 115, 22, 0.4);
 }
 
-/* Hover Effects */
-.hover-glow:hover {
-  box-shadow: 0 0 30px rgba(239, 106, 62, 0.3);
+/* Metric cards */
+.metric-card {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
 }
 
-/* Responsive Improvements */
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Action tiles */
+.action-tile {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-tile:hover {
+  border-color: #f97316;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(249, 115, 22, 0.2);
+}
+
+.action-tile h3 {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.action-tile-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Progress bar */
+.progress-bar {
+  width: 100%;
+  height: 12px;
+  background-color: #334155;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f97316, #ea580c);
+  transition: width 0.5s ease;
+}
+
+/* Grid layouts */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+}
+
+.tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+/* Text colors */
+.text-orange {
+  color: #f97316;
+}
+
+.text-slate-300 {
+  color: #cbd5e1;
+}
+
+.text-slate-400 {
+  color: #94a3b8;
+}
+
+.text-white {
+  color: #ffffff;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .metrics-grid {
-    @apply grid-cols-1 gap-4;
+    grid-template-columns: 1fr;
   }
   
-  .actions-grid {
-    @apply grid-cols-1 gap-4;
+  .tiles-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
