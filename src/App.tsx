@@ -142,18 +142,20 @@ const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: nu
 // ============================================================================+
 
 function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
-  let baseCarbs = 50; // More realistic starting point
-  
-  // Duration factor (more conservative)
-  if (assessment.eventDuration < 1.5) {
-    baseCarbs = 35; // Short events
-  } else if (assessment.eventDuration >= 1.5 && assessment.eventDuration <= 3) {
-    baseCarbs = 55; // Medium duration  
-  } else if (assessment.eventDuration > 3 && assessment.eventDuration <= 6) {
-    baseCarbs = 65; // Long duration
-  } else {
-    baseCarbs = 75; // Ultra distance
-  }
+  // ... your existing calculation code ...
+  return {
+    targetCarbs: Math.round(finalCarbs),
+    confidence,
+    recommendations,
+    challengeProtocol: {
+      // ... existing code ...
+    }
+  };
+}
+
+function generateRecommendations(assessment: AssessmentData, targetCarbs: number): string[] {
+  // ... the code above ...
+}
   
   // Intensity adjustments (MORE IMPORTANT NOW)
   const intensityMultiplier = {
