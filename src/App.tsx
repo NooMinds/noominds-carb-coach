@@ -138,24 +138,22 @@ const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: nu
 };
 
 // ============================================================================+
-// CARB CALCULATION ALGORITHM                                                  +
+// CARB CALCULATION ALGORITHM (FIXED VERSION)                                 +
 // ============================================================================+
 
 function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
-  // ... your existing calculation code ...
-  return {
-    targetCarbs: Math.round(finalCarbs),
-    confidence,
-    recommendations,
-    challengeProtocol: {
-      // ... existing code ...
-    }
-  };
-}
-
-function generateRecommendations(assessment: AssessmentData, targetCarbs: number): string[] {
-  // ... the code above ...
-}
+  let baseCarbs = 50; // More realistic starting point
+  
+  // Duration factor (more conservative)
+  if (assessment.eventDuration < 1.5) {
+    baseCarbs = 35; // Short events
+  } else if (assessment.eventDuration >= 1.5 && assessment.eventDuration <= 3) {
+    baseCarbs = 55; // Medium duration  
+  } else if (assessment.eventDuration > 3 && assessment.eventDuration <= 6) {
+    baseCarbs = 65; // Long duration
+  } else {
+    baseCarbs = 75; // Ultra distance
+  }
   
   // Intensity adjustments (MORE IMPORTANT NOW)
   const intensityMultiplier = {
@@ -230,6 +228,31 @@ function generateRecommendations(assessment: AssessmentData, targetCarbs: number
       ]
     }
   };
+}
+
+function generateRecommendations(assessment: AssessmentData, targetCarbs: number): string[] {
+  const recommendations = [];
+  
+  if (assessment.currentCarbIntake < targetCarbs * 0.8) {
+    recommendations.push(`Gradually increase from ${assessment.currentCarbIntake}g/hr to ${targetCarbs}g/hr over 8-12 weeks`);
+  }
+  
+  if (assessment.sport === 'running' && targetCarbs > 70) {
+    recommendations.push("Running puts more stress on the gut - test carb tolerance in training first");
+  }
+  
+  if (assessment.hasGiIssues) {
+    recommendations.push("Start with glucose/maltodextrin only, avoid fructose initially");
+  }
+  
+  if (assessment.eventDuration > 4) {
+    recommendations.push("Consider mixed carb sources (glucose + fructose) for ultra-distance events");
+  }
+  
+  recommendations.push("Practice your race-day fueling strategy weekly in training");
+  recommendations.push("Test the 3-hour gut challenge protocol before implementing");
+  
+  return recommendations;
 }
 
 // ============================================================================+
@@ -416,7 +439,7 @@ const Layout: React.FC<{ children: React.ReactNode; isCoachMode: boolean; onTogg
 );
 
 // ============================================================================
-// ASSESSMENT COMPONENT
+// ASSESSMENT COMPONENT (COMPLETE WITH FIXED CALCULATION)
 // ============================================================================
 
 const Assessment: React.FC<{ onBack: () => void; onComplete: (result: AssessmentResult) => void }> = ({ onBack, onComplete }) => {
@@ -454,18 +477,18 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-const handleSubmit = () => {
-  try {
-    console.log("Button clicked!");
-    console.log("Form data:", formData);
-    const calculatedResult = calculateTargetCarbs(formData);
-    console.log("Calculated result:", calculatedResult);
-    setResult(calculatedResult);
-  } catch (error) {
-    console.error("Calculation error:", error);
-    alert("Error calculating carbs: " + error.message);
-  }
-};
+  const handleSubmit = () => {
+    try {
+      console.log("Button clicked!");
+      console.log("Form data:", formData);
+      const calculatedResult = calculateTargetCarbs(formData);
+      console.log("Calculated result:", calculatedResult);
+      setResult(calculatedResult);
+    } catch (error) {
+      console.error("Calculation error:", error);
+      alert("Error calculating carbs: " + error.message);
+    }
+  };
 
   if (result) {
     return (
