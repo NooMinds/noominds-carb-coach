@@ -64,6 +64,43 @@ interface Client {
   event: EventDetails;
 }
 
+// Assessment Types
+interface AssessmentData {
+  // Personal Information
+  age: number;
+  weight: number;
+  gender: 'male' | 'female';
+  heightCm: number;
+  
+  // Event Details
+  eventName: string;
+  eventDate: string;
+  eventDuration: number; // hours
+  sport: 'cycling' | 'running' | 'triathlon' | 'swimming' | 'other';
+  intensity: 'low' | 'moderate' | 'high' | 'mixed';
+  
+  // Experience & History
+  experienceLevel: 'beginner' | 'intermediate' | 'advanced';
+  currentCarbIntake: number; // g/hr currently comfortable with
+  hasGiIssues: boolean;
+  symptomHistory: string[];
+  
+  // Training Background
+  weeklyTrainingHours: number;
+  longestSession: number; // hours
+  fuelingSources: string[];
+}
+
+interface AssessmentResult {
+  targetCarbs: number;
+  confidence: 'high' | 'medium' | 'low';
+  recommendations: string[];
+  challengeProtocol: {
+    duration: number;
+    carbsPerHour: number;
+    testInstructions: string[];
+  };
+}
 
 // Minimal localStorage hook for chat/session data
 function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -99,6 +136,122 @@ const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: nu
     count: longSessions.length,
   };
 };
+
+// ============================================================================+
+// CARB CALCULATION ALGORITHM                                                  +
+// ============================================================================+
+
+function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
+  let baseCarbs = 60; // Starting baseline g/hr
+  
+  // Duration factor (most important)
+  if (assessment.eventDuration < 2) {
+    baseCarbs = 45; // Shorter events
+  } else if (assessment.eventDuration >= 2 && assessment.eventDuration <= 3) {
+    baseCarbs = 75; // Medium duration
+  } else {
+    baseCarbs = 90; // Long duration events
+  }
+  
+  // Intensity adjustments
+  const intensityMultiplier = {
+    'low': 0.85,
+    'moderate': 1.0,
+    'high': 1.15,
+    'mixed': 1.05
+  };
+  baseCarbs *= intensityMultiplier[assessment.intensity];
+  
+  // Body weight factor (1g per kg as rough guide)
+  const weightFactor = assessment.weight / 70; // 70kg as reference
+  baseCarbs *= (0.8 + (weightFactor * 0.4)); // Scale between 80-120% based on weight
+  
+  // Sport-specific tolerance
+  const sportAdjustment = {
+    'cycling': 15,      // Highest tolerance
+    'triathlon': 10,    // High tolerance
+    'swimming': 5,      // Medium tolerance
+    'running': 0,       // Baseline (hardest on gut)
+    'other': 5          // Medium tolerance
+  };
+  baseCarbs += sportAdjustment[assessment.sport];
+  
+  // Experience level
+  const experienceAdjustment = {
+    'beginner': -10,
+    'intermediate': 0,
+    'advanced': 10
+  };
+  baseCarbs += experienceAdjustment[assessment.experienceLevel];
+  
+  // Age factor (slight reduction over 40)
+  if (assessment.age > 40) {
+    baseCarbs *= 0.95;
+  }
+  
+  // Gender factor (very slight difference)
+  if (assessment.gender === 'female') {
+    baseCarbs *= 0.98;
+  }
+  
+  // Cap at physiological limits
+  const finalCarbs = Math.min(Math.max(baseCarbs, 30), 120);
+  
+  // Confidence calculation
+  let confidence: 'high' | 'medium' | 'low' = 'high';
+  if (assessment.hasGiIssues || assessment.currentCarbIntake < (finalCarbs * 0.7)) {
+    confidence = 'medium';
+  }
+  if (assessment.experienceLevel === 'beginner' && finalCarbs > 70) {
+    confidence = 'low';
+  }
+  
+  // Generate recommendations
+  const recommendations = generateRecommendations(assessment, finalCarbs);
+  
+  return {
+    targetCarbs: Math.round(finalCarbs),
+    confidence,
+    recommendations,
+    challengeProtocol: {
+      duration: 3,
+      carbsPerHour: Math.round(finalCarbs),
+      testInstructions: [
+        `Hour 1: Consume ${Math.round(finalCarbs)}g carbs while training`,
+        `Hour 2: Consume ${Math.round(finalCarbs)}g carbs while training`,
+        `Hour 3: Consume ${Math.round(finalCarbs)}g carbs while training`,
+        `Rate symptoms 0-10 each hour`,
+        `Maintain race-day intensity throughout`,
+        `Log results in NooMinds session tracker`
+      ]
+    }
+  };
+}
+
+function generateRecommendations(assessment: AssessmentData, targetCarbs: number): string[] {
+  const recommendations = [];
+  
+  if (assessment.currentCarbIntake < targetCarbs * 0.8) {
+    recommendations.push(`Gradually increase from ${assessment.currentCarbIntake}g/hr to ${targetCarbs}g/hr over 8-12 weeks`);
+  }
+  
+  if (assessment.sport === 'running' && targetCarbs > 70) {
+    recommendations.push("Running puts more stress on the gut - test carb tolerance in training first");
+  }
+  
+  if (assessment.hasGiIssues) {
+    recommendations.push("Start with glucose/maltodextrin only, avoid fructose initially");
+  }
+  
+  if (assessment.eventDuration > 4) {
+    recommendations.push("Consider mixed carb sources (glucose + fructose) for ultra-distance events");
+  }
+  
+  recommendations.push("Practice your race-day fueling strategy weekly in training");
+  recommendations.push("Test the 3-hour gut challenge protocol before implementing");
+  
+  return recommendations;
+}
 
 // ============================================================================+
 // PDF EXPORT UTILITY                                                          +
@@ -243,7 +396,6 @@ const mockClients: Client[] = [
   },
 ];
 
-
 // ============================================================================
 // Branding & Layout Components
 // ============================================================================
@@ -283,6 +435,260 @@ const Layout: React.FC<{ children: React.ReactNode; isCoachMode: boolean; onTogg
     <Footer />
   </div>
 );
+
+// ============================================================================
+// ASSESSMENT COMPONENT
+// ============================================================================
+
+const Assessment: React.FC<{ onBack: () => void; onComplete: (result: AssessmentResult) => void }> = ({ onBack, onComplete }) => {
+  const [formData, setFormData] = useState<AssessmentData>({
+    age: 30,
+    weight: 70,
+    gender: 'male',
+    heightCm: 175,
+    eventName: '',
+    eventDate: '',
+    eventDuration: 3,
+    sport: 'cycling',
+    intensity: 'moderate',
+    experienceLevel: 'intermediate',
+    currentCarbIntake: 50,
+    hasGiIssues: false,
+    symptomHistory: [],
+    weeklyTrainingHours: 10,
+    longestSession: 3,
+    fuelingSources: ['Gels']
+  });
+
+  const [result, setResult] = useState<AssessmentResult | null>(null);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
+  };
+
+  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleSubmit = () => {
+    const calculatedResult = calculateTargetCarbs(formData);
+    setResult(calculatedResult);
+  };
+
+  if (result) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <header className="mb-8">
+          <h1 className="text-slate-900">Your Personalized Carb Recommendation</h1>
+          <p className="mt-2 text-lg text-slate-600">Based on your assessment, here's your race-day carb strategy.</p>
+        </header>
+
+        <div className="space-y-6">
+          {/* Results Card */}
+          <div className="card">
+            <div className="text-center mb-6">
+              <h2 className="text-3xl font-bold mb-2" style={{color: '#EF6A3E'}}>
+                {result.targetCarbs}g carbs/hour
+              </h2>
+              <p className="text-slate-600">Recommended for your {formData.eventName || 'event'}</p>
+              <div className={`inline-block px-3 py-1 rounded-full text-sm ${
+                result.confidence === 'high' ? 'bg-green-100 text-green-800' :
+                result.confidence === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-red-100 text-red-800'
+              }`}>
+                {result.confidence.toUpperCase()} CONFIDENCE
+              </div>
+            </div>
+          </div>
+
+          {/* Challenge Protocol */}
+          <div className="card" style={{backgroundColor: 'rgba(239, 106, 62, 0.1)', borderColor: 'rgba(239, 106, 62, 0.3)', borderWidth: '1px', borderStyle: 'solid'}}>
+            <h3 className="font-bold mb-4" style={{color: '#EF6A3E'}}>🧪 But Can Your Gut Handle It?</h3>
+            <p className="mb-4 text-slate-700">Before race day, test if your gut can actually handle this intake:</p>
+            
+            <div className="bg-white p-4 rounded-lg mb-4">
+              <h4 className="font-semibold mb-2">3-Hour Gut Challenge Protocol:</h4>
+              <ol className="list-decimal list-inside space-y-1">
+                {result.challengeProtocol.testInstructions.map((instruction, index) => (
+                  <li key={index} className="text-sm">{instruction}</li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+              <p className="text-sm text-yellow-800">
+                <strong>Reality Check:</strong> Most athletes can only handle 60g/hr comfortably. 
+                If you score 4+ on symptoms during this test, your gut needs training.
+              </p>
+            </div>
+          </div>
+
+          {/* Recommendations */}
+          <div className="card">
+            <h3 className="font-semibold mb-4">📋 Your Personalized Recommendations:</h3>
+            <ul className="space-y-2">
+              {result.recommendations.map((rec, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="mr-2" style={{color: '#EF6A3E'}}>•</span>
+                  <span className="text-sm">{rec}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <button onClick={onBack} className="btn btn-primary">
+              Back to Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-slate-900">Personalized Carb Assessment</h1>
+        <p className="mt-2 text-lg text-slate-600">
+          Let's calculate your optimal race-day carb intake based on science and your individual profile.
+        </p>
+      </header>
+
+      <form className="card space-y-8">
+        {/* Step 1: Personal Information */}
+        <fieldset>
+          <legend>1. Personal Information</legend>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="form-label">Age</label>
+              <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Weight (kg)</label>
+              <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Gender</label>
+              <select name="gender" value={formData.gender} onChange={handleInputChange} className="form-select">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Step 2: Event Details */}
+        <fieldset>
+          <legend>2. Your Target Event</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">Event Name</label>
+              <input type="text" name="eventName" value={formData.eventName} onChange={handleInputChange} 
+                     placeholder="e.g., Ironman 70.3" className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Event Duration (hours)</label>
+              <input type="number" step="0.5" name="eventDuration" value={formData.eventDuration} 
+                     onChange={handleInputChange} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Primary Sport</label>
+              <select name="sport" value={formData.sport} onChange={handleInputChange} className="form-select">
+                <option value="cycling">Cycling</option>
+                <option value="running">Running</option>
+                <option value="triathlon">Triathlon</option>
+                <option value="swimming">Swimming</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Expected Intensity</label>
+              <select name="intensity" value={formData.intensity} onChange={handleInputChange} className="form-select">
+                <option value="low">Low (Easy/Recovery pace)</option>
+                <option value="moderate">Moderate (Steady state)</option>
+                <option value="high">High (Threshold/Race pace)</option>
+                <option value="mixed">Mixed (Variable intensity)</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Step 3: Experience & Current Status */}
+        <fieldset>
+          <legend>3. Experience & Current Fueling</legend>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">Experience Level</label>
+              <select name="experienceLevel" value={formData.experienceLevel} onChange={handleInputChange} className="form-select">
+                <option value="beginner">Beginner (0-2 years)</option>
+                <option value="intermediate">Intermediate (2-5 years)</option>
+                <option value="advanced">Advanced (5+ years)</option>
+              </select>
+            </div>
+            <div>
+              <label className="form-label">Current Comfortable Carb Intake (g/hr)</label>
+              <input type="number" name="currentCarbIntake" value={formData.currentCarbIntake} 
+                     onChange={handleInputChange} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Weekly Training Hours</label>
+              <input type="number" name="weeklyTrainingHours" value={formData.weeklyTrainingHours} 
+                     onChange={handleInputChange} className="form-input" />
+            </div>
+            <div>
+              <label className="form-label">Longest Training Session (hours)</label>
+              <input type="number" step="0.5" name="longestSession" value={formData.longestSession} 
+                     onChange={handleInputChange} className="form-input" />
+            </div>
+          </div>
+        </fieldset>
+
+        {/* Step 4: GI History */}
+        <fieldset>
+          <legend>4. Gut Health History</legend>
+          <div className="space-y-4">
+            <div>
+              <label className="flex items-center">
+                <input type="checkbox" name="hasGiIssues" checked={formData.hasGiIssues} 
+                       onChange={handleCheckboxChange} className="form-checkbox mr-2" />
+                I have experienced GI issues during training or racing
+              </label>
+            </div>
+            {formData.hasGiIssues && (
+              <div>
+                <label className="form-label">What symptoms have you experienced? (Check all that apply)</label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea', 'Vomiting'].map(symptom => (
+                    <label key={symptom} className="flex items-center">
+                      <input type="checkbox" className="form-checkbox mr-2" />
+                      {symptom}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </fieldset>
+
+        <div className="flex justify-between items-center pt-8 border-t">
+          <button type="button" onClick={onBack} className="btn btn-outline">
+            Cancel
+          </button>
+          <button type="button" onClick={handleSubmit} className="btn btn-primary">
+            Calculate My Carb Needs
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 // ============================================================================
 // Page Components
@@ -333,7 +739,7 @@ const Dashboard: React.FC<DashboardProps> = ({ client, onNavigate }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="card flex flex-col items-center text-center">
               <h3 className="font-semibold mb-2">1. Start Your Assessment</h3>
-              <p className="text-sm text-slate-600 flex-grow mb-4">Generate your personalized gut training plan.</p>
+              <p className="text-sm text-slate-600 flex-grow mb-4">Calculate your personalized carb needs and gut training plan.</p>
               <button onClick={() => onNavigate('assessment')} className="btn btn-primary w-full">Start Assessment</button>
             </div>
             <div className="card flex flex-col items-center text-center">
@@ -522,7 +928,6 @@ const SessionLogger: React.FC<{ onAddSession: (session: Omit<Session, 'id'>) => 
     </div>
   );
 };
-
 
 // Placeholder for other pages to ensure navigation works
 const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
@@ -761,7 +1166,7 @@ const CoachDashboard: React.FC<{ clients: Client[]; onSelectClient: (id: string)
               <div className="p-4 bg-slate-50">
                 <p className="text-xs text-slate-500 mb-1">Event Readiness</p>
                 <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-orange" style={{ width: `${readiness}%` }} />
+                  <div className="h-full" style={{ backgroundColor: '#EF6A3E', width: `${readiness}%` }} />
                 </div>
                 <div className="flex justify-between text-xs mt-1">
                   <span>{avg.toFixed(0)} g/hr</span>
@@ -791,7 +1196,7 @@ const ClientDetailView: React.FC<{ client: Client; onBackToCoachDashboard: () =>
   const renderView = () => {
      switch (currentView) {
       case 'assessment':
-        return <PlaceholderPage title={`Assessment for ${client.profile.name}`} onBack={() => setCurrentView('dashboard')} />;
+        return <Assessment onBack={() => setCurrentView('dashboard')} onComplete={() => setCurrentView('dashboard')} />;
       case 'logger':
         return <SessionLogger onAddSession={addSession} onBack={() => setCurrentView('dashboard')} />;
       case 'progress':
