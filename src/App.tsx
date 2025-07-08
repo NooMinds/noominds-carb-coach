@@ -452,10 +452,18 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = () => {
+const handleSubmit = () => {
+  try {
+    console.log("Button clicked!");
+    console.log("Form data:", formData);
     const calculatedResult = calculateTargetCarbs(formData);
+    console.log("Calculated result:", calculatedResult);
     setResult(calculatedResult);
-  };
+  } catch (error) {
+    console.error("Calculation error:", error);
+    alert("Error calculating carbs: " + error.message);
+  }
+};
 
   if (result) {
     return (
