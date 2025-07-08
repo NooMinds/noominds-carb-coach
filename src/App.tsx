@@ -142,45 +142,47 @@ const calculateFilteredAvgCarb = (sessions: Session[]): { avg: number; count: nu
 // ============================================================================+
 
 function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
-  let baseCarbs = 60; // Starting baseline g/hr
+  let baseCarbs = 50; // More realistic starting point
   
-  // Duration factor (most important)
-  if (assessment.eventDuration < 2) {
-    baseCarbs = 45; // Shorter events
-  } else if (assessment.eventDuration >= 2 && assessment.eventDuration <= 3) {
-    baseCarbs = 75; // Medium duration
+  // Duration factor (more conservative)
+  if (assessment.eventDuration < 1.5) {
+    baseCarbs = 35; // Short events
+  } else if (assessment.eventDuration >= 1.5 && assessment.eventDuration <= 3) {
+    baseCarbs = 55; // Medium duration  
+  } else if (assessment.eventDuration > 3 && assessment.eventDuration <= 6) {
+    baseCarbs = 65; // Long duration
   } else {
-    baseCarbs = 90; // Long duration events
+    baseCarbs = 75; // Ultra distance
   }
   
-  // Intensity adjustments
+  // Intensity adjustments (MORE IMPORTANT NOW)
   const intensityMultiplier = {
-    'low': 0.85,
-    'moderate': 1.0,
-    'high': 1.15,
-    'mixed': 1.05
+    'low': 0.75,        // Easy pace - much less carbs needed
+    'moderate': 0.9,    // Steady state should be LESS than base
+    'high': 1.2,        // Race pace - higher carbs
+    'mixed': 1.05       // Variable
   };
   baseCarbs *= intensityMultiplier[assessment.intensity];
   
-  // Body weight factor (1g per kg as rough guide)
-  const weightFactor = assessment.weight / 70; // 70kg as reference
-  baseCarbs *= (0.8 + (weightFactor * 0.4)); // Scale between 80-120% based on weight
+  // Body weight factor (less aggressive)
+  const weightFactor = assessment.weight / 70; 
+  baseCarbs *= (0.9 + (weightFactor * 0.2)); // 90-110% range instead of 80-120%
   
-  // Sport-specific tolerance
+  // Sport-specific tolerance (reduced bonuses)
   const sportAdjustment = {
-    'cycling': 15,      // Highest tolerance
-    'triathlon': 10,    // High tolerance
-    'swimming': 5,      // Medium tolerance
-    'running': 0,       // Baseline (hardest on gut)
-    'other': 5          // Medium tolerance
+    'cycling': 8,       // Reduced from +15 to +8
+    'triathlon': 5,     // Reduced from +10 to +5  
+    'swimming': 2,      // Reduced from +5 to +2
+    'running': 0,       // Baseline
+    'other': 3          // Reduced from +5 to +3
   };
   baseCarbs += sportAdjustment[assessment.sport];
   
-  // Experience level
+  // Experience level (reduced bonuses)
   const experienceAdjustment = {
-    'beginner': -10,
+    'beginner': -8,     // Increased penalty from -10 to -8
     'intermediate': 0,
-    'advanced': 10
+    'advanced': 5       // Reduced bonus from +10 to +5
   };
   baseCarbs += experienceAdjustment[assessment.experienceLevel];
   
@@ -194,8 +196,8 @@ function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
     baseCarbs *= 0.98;
   }
   
-  // Cap at physiological limits
-  const finalCarbs = Math.min(Math.max(baseCarbs, 30), 120);
+  // Cap at more realistic limits
+  const finalCarbs = Math.min(Math.max(baseCarbs, 25), 100); // Reduced max from 120 to 100
   
   // Confidence calculation
   let confidence: 'high' | 'medium' | 'low' = 'high';
@@ -226,31 +228,6 @@ function calculateTargetCarbs(assessment: AssessmentData): AssessmentResult {
       ]
     }
   };
-}
-
-function generateRecommendations(assessment: AssessmentData, targetCarbs: number): string[] {
-  const recommendations = [];
-  
-  if (assessment.currentCarbIntake < targetCarbs * 0.8) {
-    recommendations.push(`Gradually increase from ${assessment.currentCarbIntake}g/hr to ${targetCarbs}g/hr over 8-12 weeks`);
-  }
-  
-  if (assessment.sport === 'running' && targetCarbs > 70) {
-    recommendations.push("Running puts more stress on the gut - test carb tolerance in training first");
-  }
-  
-  if (assessment.hasGiIssues) {
-    recommendations.push("Start with glucose/maltodextrin only, avoid fructose initially");
-  }
-  
-  if (assessment.eventDuration > 4) {
-    recommendations.push("Consider mixed carb sources (glucose + fructose) for ultra-distance events");
-  }
-  
-  recommendations.push("Practice your race-day fueling strategy weekly in training");
-  recommendations.push("Test the 3-hour gut challenge protocol before implementing");
-  
-  return recommendations;
 }
 
 // ============================================================================+
