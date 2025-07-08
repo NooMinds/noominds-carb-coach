@@ -697,71 +697,63 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: AppView) => void 
           </div>
         </div>
 
-        {/* Action Cards */}
+        {/* 4 Feature Tiles */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-8">Get Started</h2>
-          <div className="actions-grid">
-            <div className="action-card action-card-primary" onClick={() => onNavigate('assessment')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M9 12l2 2 4-4"></path>
-                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-2">1. Start Your Assessment</h3>
-                  <p className="text-slate-300 leading-relaxed">Get your personalized carb strategy based on your profile, sport, and goals</p>
-                </div>
+          <div className="tiles-grid">
+            
+            {/* Assessment Tile */}
+            <div className="action-tile" onClick={() => onNavigate('assessment')}>
+              <div className="action-tile-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 12l2 2 4-4"></path>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                </svg>
               </div>
+              <h3>Assessment</h3>
+              <p className="text-slate-400 text-sm">Calculate your personalized carb strategy</p>
             </div>
 
-            <div className="action-card" onClick={() => onNavigate('logger')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-2">2. Log Training Session</h3>
-                  <p className="text-slate-300 leading-relaxed">Track your fueling, symptoms, and performance for each workout</p>
-                </div>
+            {/* Session Tile */}
+            <div className="action-tile" onClick={() => onNavigate('logger')}>
+              <div className="action-tile-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14,2 14,8 20,8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                </svg>
               </div>
+              <h3>Session</h3>
+              <p className="text-slate-400 text-sm">Log your training sessions</p>
             </div>
 
-            <div className="action-card" onClick={() => onNavigate('event_planner')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-2">3. Event Day Planner</h3>
-                  <p className="text-slate-300 leading-relaxed">Plan and track your readiness for your target event</p>
-                </div>
+            {/* Planner Tile */}
+            <div className="action-tile" onClick={() => onNavigate('event_planner')}>
+              <div className="action-tile-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                </svg>
               </div>
+              <h3>Planner</h3>
+              <p className="text-slate-400 text-sm">Plan your event strategy</p>
             </div>
 
-            <div className="action-card" onClick={() => onNavigate('ai_coach')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-14 h-14 bg-slate-700 rounded-xl flex items-center justify-center group-hover:bg-orange-500 transition-colors">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    <circle cx="9" cy="12" r="1"></circle>
-                    <circle cx="15" cy="12" r="1"></circle>
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-white font-semibold text-lg mb-2">4. AI Carb Coach</h3>
-                  <p className="text-slate-300 leading-relaxed">Get personalized advice from your AI nutrition coach</p>
-                </div>
+            {/* AI Carb Coach Tile */}
+            <div className="action-tile" onClick={() => onNavigate('ai_coach')}>
+              <div className="action-tile-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  <circle cx="9" cy="12" r="1"></circle>
+                  <circle cx="15" cy="12" r="1"></circle>
+                </svg>
               </div>
+              <h3>AI Carb Coach</h3>
+              <p className="text-slate-400 text-sm">Get personalized advice</p>
             </div>
+
           </div>
         </div>
       </div>
