@@ -848,6 +848,252 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: AppView) => void 
 };
 
 // ============================================================================
+// SESSION LOGGER COMPONENT
+// ============================================================================
+const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Session, 'id'>) => void }> = ({ onBack, onSave }) => {
+  const [formData, setFormData] = useState({
+    date: new Date().toISOString().split('T')[0],
+    sport: 'Cycling',
+    duration: 90,
+    carbs: 60,
+    fluids: 750,
+    symptomSeverity: 0,
+    rpe: 5,
+    notes: ''
+  });
+
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    
+    const newSession = {
+      ...formData,
+      id: Date.now().toString()
+    };
+
+    const existingSessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
+    existingSessions.push(newSession);
+    localStorage.setItem('noominds-sessions', JSON.stringify(existingSessions));
+
+    setShowSuccess(true);
+    
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      sport: 'Cycling',
+      duration: 90,
+      carbs: 60,
+      fluids: 750,
+      symptomSeverity: 0,
+      rpe: 5,
+      notes: ''
+    });
+
+    setTimeout(() => {
+      setShowSuccess(false);
+    }, 3000);
+  };
+
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
+  };
+
+  const labelStyle = {
+    color: '#ffffff',
+    fontWeight: '500',
+    marginBottom: '8px',
+    display: 'block'
+  };
+
+  const carbRate = formData.duration > 0 ? (formData.carbs / (formData.duration / 60)).toFixed(1) : 0;
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-12">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">Log Training Session</h1>
+        <p className="text-xl text-slate-300">Track your fueling and gut response during training</p>
+      </div>
+
+      {showSuccess && (
+        <div className="card bg-green-500/10 border-2 border-green-500/30 mb-8">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mr-4">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-green-400 font-bold text-lg">Session Logged Successfully!</h3>
+              <p className="text-green-300">Your training data has been saved and will update your progress metrics.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">1</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Session Details</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label style={labelStyle}>Date</label>
+              <input 
+                type="date" 
+                name="date" 
+                value={formData.date} 
+                onChange={handleInputChange} 
+                style={inputStyle}
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Sport</label>
+              <select 
+                name="sport" 
+                value={formData.sport} 
+                onChange={handleInputChange} 
+                style={inputStyle}
+              >
+                <option value="Cycling">Cycling</option>
+                <option value="Running">Running</option>
+                <option value="Swimming">Swimming</option>
+                <option value="Triathlon">Triathlon</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Duration (minutes)</label>
+              <input 
+                type="number" 
+                name="duration" 
+                value={formData.duration} 
+                onChange={handleInputChange} 
+                style={inputStyle}
+                min="1"
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Rate of Perceived Exertion (1-10)</label>
+              <div className="space-y-2">
+                <input 
+                  type="range" 
+                  name="rpe" 
+                  value={formData.rpe} 
+                  onChange={handleInputChange} 
+                  min="1" 
+                  max="10" 
+                  className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                  style={{accentColor: '#f97316'}}
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400 text-sm">Easy</span>
+                  <span className="text-orange-400 font-bold text-lg">{formData.rpe}</span>
+                  <span className="text-slate-400 text-sm">Max</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">2</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Nutrition & Hydration</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label style={labelStyle}>Total Carbs Consumed (grams)</label>
+              <input 
+                type="number" 
+                name="carbs" 
+                value={formData.carbs} 
+                onChange={handleInputChange} 
+                style={inputStyle}
+                min="0"
+                required
+              />
+              <p className="text-slate-400 text-sm mt-1">
+                Rate: <span className="text-orange-400 font-semibold">{carbRate}g/hr</span>
+              </p>
+            </div>
+            <div>
+              <label style={labelStyle}>Total Fluids Consumed (ml)</label>
+              <input 
+                type="number" 
+                name="fluids" 
+                value={formData.fluids} 
+                onChange={handleInputChange} 
+                style={inputStyle}
+                min="0"
+                required
+              />
+              <p className="text-slate-400 text-sm mt-1">
+                Rate: <span className="text-blue-400 font-semibold">{formData.duration > 0 ? Math.round(formData.fluids / (formData.duration / 60)) : 0}ml/hr</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">3</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Gut Response</h2>
+          </div>
+          <div>
+            <label style={labelStyle}>Overall Symptom Severity (0 = None, 10 = Severe)</label>
+            <div className="space-y-4">
+              <input 
+                type="range" 
+                name="symptomSeverity" 
+                value={formData.symptomSeverity} 
+                onChange={handleInputChange} 
+                min="0" 
+                max="10" 
+                className="w-full h-3 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                style={{accentColor: formData.symptomSeverity <= 3 ? '#10b981' : formData.symptomSeverity <= 6 ? '#f59e0b' : '#ef4444'}}
+              />
+              <div className="flex justify-between items-center">
+                <span className="text-slate-400 text-sm">No symptoms</span>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${
+                    formData.symptomSeverity <= 3 ? 'text-green-400' :
+                    formData.symptomSeverity <= 6 ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {formData.symptomSeverity}
+                  </div>
+                  <div // ============================================================================
 // PLACEHOLDER COMPONENTS (MODERN STYLING)
 // ============================================================================
 const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
