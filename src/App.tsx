@@ -741,6 +741,25 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     return (assessmentResult.targetCarbs / (assessmentResult.duration / 60)).toFixed(1);
   };
 
+  /* ------------------------------------------------------------------
+     RESET DATA: Clear all stored data and reset dashboard state
+  ------------------------------------------------------------------ */
+  const handleResetData = () => {
+    const confirmReset = window.confirm(
+      '⚠️  This will permanently delete all saved assessments, sessions, and event plans. Are you sure you want to continue?'
+    );
+    if (!confirmReset) return;
+
+    // Clear localStorage keys
+    localStorage.removeItem('noominds-assessment');
+    localStorage.removeItem('noominds-sessions');
+    localStorage.removeItem('noominds-event-plans');
+
+    // Reset component state
+    setAssessmentResult(null);
+    setSessions([]);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -798,6 +817,24 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Reset Data Button */}
+      <div className="flex justify-end mb-10">
+        <button
+          onClick={handleResetData}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#dc2626', // red-600
+            color: '#ffffff',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+          className="hover:bg-red-700 transition-colors"
+        >
+          🗑️ Reset All Data
+        </button>
       </div>
 
       {/* Feature Tiles */}
