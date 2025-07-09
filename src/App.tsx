@@ -742,6 +742,13 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
   };
 
   /* ------------------------------------------------------------------
+     DISPLAY INFO: Prefer real assessment data over mock client
+  ------------------------------------------------------------------ */
+  const displayName = assessmentResult?.name || client.name;
+  const displaySport = assessmentResult?.sport || client.sport;
+  const displayExperience = assessmentResult?.experienceLevel || client.experienceLevel;
+
+  /* ------------------------------------------------------------------
      RESET DATA: Clear all stored data and reset dashboard state
   ------------------------------------------------------------------ */
   const handleResetData = () => {
@@ -766,15 +773,15 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       <div className="flex flex-col md:flex-row justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-white">NooMinds Carb Coach</h1>
-          <p className="text-slate-400 text-xl">Welcome back, {client.name}</p>
+          <p className="text-slate-400 text-xl">Welcome back, {displayName}</p>
         </div>
         <div className="flex items-center mt-4 md:mt-0">
           <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mr-3">
-            <span className="text-white font-bold">{client.name.charAt(0)}</span>
+            <span className="text-white font-bold">{displayName.charAt(0)}</span>
           </div>
           <div>
-            <p className="text-white font-semibold">{client.sport}</p>
-            <p className="text-slate-400 text-sm">{client.experienceLevel}</p>
+            <p className="text-white font-semibold">{displaySport}</p>
+            <p className="text-slate-400 text-sm">{displayExperience}</p>
           </div>
         </div>
       </div>
