@@ -408,213 +408,345 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
 
   if (result) {
     return (
-      <div className="min-h-screen bg-slate-900">
-        <div className="max-w-4xl mx-auto">
-          <header className="mb-8">
-            <h1 className="text-4xl font-bold text-white mb-4">Your Personalized Carb Recommendation</h1>
-            <p className="text-xl text-slate-300">Based on your assessment, here's your race-day carb strategy.</p>
-          </header>
+      <div className="max-w-5xl mx-auto">
+        {/* Results Header */}
+        <div className="text-center mb-12">
+          <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 12l2 2 4-4"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-4">Your Personalized Carb Strategy</h1>
+          <p className="text-xl text-slate-300">Based on your assessment, here's your race-day nutrition plan</p>
+        </div>
 
-          <div className="space-y-6">
-            {/* Results Card */}
-            <div className="card">
-              <div className="text-center mb-6">
-                <h2 className="text-5xl font-bold gradient-text mb-4">
-                  {result.targetCarbs}g carbs/hour
-                </h2>
-                <p className="text-slate-300 text-lg">Recommended for your {formData.eventName || 'event'}</p>
-                <div className={`inline-block px-4 py-2 rounded-full text-sm font-medium mt-4 ${
-                  result.confidence === 'high' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                  result.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                  'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
-                  {result.confidence.toUpperCase()} CONFIDENCE
+        <div className="space-y-8">
+          {/* Main Result Card */}
+          <div className="card text-center bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-orange-500/30">
+            <div className="mb-8">
+              <div className="text-6xl font-bold gradient-text mb-4">
+                {result.targetCarbs}g
+              </div>
+              <div className="text-2xl text-slate-300 mb-2">carbs per hour</div>
+              <div className="text-lg text-slate-400">Recommended for your {formData.eventName || 'event'}</div>
+              
+              <div className={`inline-block px-6 py-3 rounded-full text-sm font-bold mt-6 ${
+                result.confidence === 'high' ? 'bg-green-500/20 text-green-400 border-2 border-green-500/40' :
+                result.confidence === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border-2 border-yellow-500/40' :
+                'bg-red-500/20 text-red-400 border-2 border-red-500/40'
+              }`}>
+                {result.confidence.toUpperCase()} CONFIDENCE
+              </div>
+            </div>
+          </div>
+
+          {/* Challenge Protocol */}
+          <div className="card bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-2 border-orange-500/30">
+            <div className="flex items-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mr-4">
+                <span className="text-2xl">🧪</span>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-orange-400 mb-2">Gut Challenge Protocol</h3>
+                <p className="text-slate-300">Test if your gut can handle this intake before race day</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-600">
+              <h4 className="font-bold text-white text-lg mb-4">3-Hour Testing Protocol:</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {result.challengeProtocol.testInstructions.slice(0, 3).map((instruction, index) => (
+                  <div key={index} className="bg-slate-700/50 rounded-lg p-4 text-center">
+                    <div className="text-orange-400 font-bold text-lg mb-2">Hour {index + 1}</div>
+                    <p className="text-slate-300 text-sm">{instruction}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 space-y-2">
+                {result.challengeProtocol.testInstructions.slice(3).map((instruction, index) => (
+                  <div key={index} className="flex items-center text-slate-300">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
+                    <span className="text-sm">{instruction}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-500/30">
+              <div className="flex items-start">
+                <div className="text-yellow-400 mr-3 text-xl">⚠️</div>
+                <div>
+                  <p className="text-yellow-400 font-semibold mb-1">Reality Check</p>
+                  <p className="text-slate-300 text-sm">Most athletes can only handle 60g/hr comfortably. If you score 4+ on symptoms during this test, your gut needs more training.</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Challenge Protocol */}
-            <div className="card bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-orange-500/30">
-              <h3 className="text-2xl font-bold text-orange-400 mb-4">🧪 But Can Your Gut Handle It?</h3>
-              <p className="mb-4 text-slate-300 text-lg">Before race day, test if your gut can actually handle this intake:</p>
-              
-              <div className="bg-slate-800 p-6 rounded-lg mb-4 border border-slate-700">
-                <h4 className="font-semibold mb-4 text-white text-lg">3-Hour Gut Challenge Protocol:</h4>
-                <ol className="list-decimal list-inside space-y-2">
-                  {result.challengeProtocol.testInstructions.map((instruction, index) => (
-                    <li key={index} className="text-slate-300">{instruction}</li>
-                  ))}
-                </ol>
-              </div>
-
-              <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30">
-                <p className="text-yellow-400">
-                  <strong>Reality Check:</strong> Most athletes can only handle 60g/hr comfortably. 
-                  If you score 4+ on symptoms during this test, your gut needs training.
-                </p>
-              </div>
+          {/* Recommendations */}
+          <div className="card">
+            <h3 className="text-2xl font-bold text-white mb-6">📋 Your Training Plan</h3>
+            <div className="space-y-4">
+              {result.recommendations.map((rec, index) => (
+                <div key={index} className="flex items-start bg-slate-700/30 rounded-lg p-4">
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                    <span className="text-white font-bold text-sm">{index + 1}</span>
+                  </div>
+                  <div>
+                    <p className="text-slate-200 leading-relaxed">{rec}</p>
+                  </div>
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* Recommendations */}
-            <div className="card">
-              <h3 className="text-xl font-semibold mb-4 text-white">📋 Your Personalized Recommendations:</h3>
-              <ul className="space-y-3">
-                {result.recommendations.map((rec, index) => (
-                  <li key={index} className="flex items-start">
-                    <span className="mr-3 text-orange-400 text-lg">•</span>
-                    <span className="text-slate-300">{rec}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* CTA */}
-            <div className="text-center">
-              <button onClick={onBack} className="btn btn-primary text-lg px-8 py-4">
-                Back to Dashboard
-              </button>
-            </div>
+          {/* Action Buttons */}
+          <div className="flex justify-center space-x-4">
+            <button onClick={onBack} className="btn-primary text-lg px-8 py-4">
+              Back to Dashboard
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
+  // Assessment Form
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">Personalized Carb Assessment</h1>
-          <p className="text-xl text-slate-300">
-            Let's calculate your optimal race-day carb intake based on science and your individual profile.
-          </p>
-        </header>
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 12l2 2 4-4"></path>
+            <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+            <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">Personalized Carb Assessment</h1>
+        <p className="text-xl text-slate-300">Calculate your optimal race-day carb intake based on science and your profile</p>
+      </div>
 
-        <form className="card space-y-8">
-          {/* Step 1: Personal Information */}
-          <fieldset className="space-y-4">
-            <legend className="text-2xl font-bold text-orange-400 mb-4">1. Personal Information</legend>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="form-label">Age</label>
-                <input type="number" name="age" value={formData.age} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Weight (kg)</label>
-                <input type="number" name="weight" value={formData.weight} onChange={handleInputChange} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Gender</label>
-                <select name="gender" value={formData.gender} onChange={handleInputChange} className="form-select">
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </div>
+      <div className="space-y-8">
+        {/* Step 1: Personal Information */}
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">1</span>
             </div>
-          </fieldset>
-
-          {/* Step 2: Event Details */}
-          <fieldset className="space-y-4">
-            <legend className="text-2xl font-bold text-orange-400 mb-4">2. Your Target Event</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="form-label">Event Name</label>
-                <input type="text" name="eventName" value={formData.eventName} onChange={handleInputChange} 
-                       placeholder="e.g., Ironman 70.3" className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Event Duration (hours)</label>
-                <input type="number" step="0.5" name="eventDuration" value={formData.eventDuration} 
-                       onChange={handleInputChange} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Primary Sport</label>
-                <select name="sport" value={formData.sport} onChange={handleInputChange} className="form-select">
-                  <option value="cycling">Cycling</option>
-                  <option value="running">Running</option>
-                  <option value="triathlon">Triathlon</option>
-                  <option value="swimming">Swimming</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">Expected Intensity</label>
-                <select name="intensity" value={formData.intensity} onChange={handleInputChange} className="form-select">
-                  <option value="low">Low (Easy/Recovery pace)</option>
-                  <option value="moderate">Moderate (Steady state)</option>
-                  <option value="high">High (Threshold/Race pace)</option>
-                  <option value="mixed">Mixed (Variable intensity)</option>
-                </select>
-              </div>
-            </div>
-          </fieldset>
-
-          {/* Step 3: Experience & Current Status */}
-          <fieldset className="space-y-4">
-            <legend className="text-2xl font-bold text-orange-400 mb-4">3. Experience & Current Fueling</legend>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="form-label">Experience Level</label>
-                <select name="experienceLevel" value={formData.experienceLevel} onChange={handleInputChange} className="form-select">
-                  <option value="beginner">Beginner (0-2 years)</option>
-                  <option value="intermediate">Intermediate (2-5 years)</option>
-                  <option value="advanced">Advanced (5+ years)</option>
-                </select>
-              </div>
-              <div>
-                <label className="form-label">Current Comfortable Carb Intake (g/hr)</label>
-                <input type="number" name="currentCarbIntake" value={formData.currentCarbIntake} 
-                       onChange={handleInputChange} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Weekly Training Hours</label>
-                <input type="number" name="weeklyTrainingHours" value={formData.weeklyTrainingHours} 
-                       onChange={handleInputChange} className="form-input" />
-              </div>
-              <div>
-                <label className="form-label">Longest Training Session (hours)</label>
-                <input type="number" step="0.5" name="longestSession" value={formData.longestSession} 
-                       onChange={handleInputChange} className="form-input" />
-              </div>
-            </div>
-          </fieldset>
-
-          {/* Step 4: GI History */}
-          <fieldset className="space-y-4">
-            <legend className="text-2xl font-bold text-orange-400 mb-4">4. Gut Health History</legend>
-            <div className="space-y-4">
-              <div>
-                <label className="flex items-center">
-                  <input type="checkbox" name="hasGiIssues" checked={formData.hasGiIssues} 
-                         onChange={handleCheckboxChange} className="form-checkbox mr-3" />
-                  <span className="text-slate-300">I have experienced GI issues during training or racing</span>
-                </label>
-              </div>
-              {formData.hasGiIssues && (
-                <div>
-                  <label className="form-label">What symptoms have you experienced? (Check all that apply)</label>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea', 'Vomiting'].map(symptom => (
-                      <label key={symptom} className="flex items-center">
-                        <input type="checkbox" className="form-checkbox mr-2" />
-                        <span className="text-slate-300">{symptom}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </fieldset>
-
-          <div className="flex justify-between items-center pt-8 border-t border-slate-700">
-            <button type="button" onClick={onBack} className="btn btn-outline">
-              Cancel
-            </button>
-            <button type="button" onClick={handleSubmit} className="btn btn-primary text-lg px-8 py-4">
-              Calculate My Carb Needs
-            </button>
+            <h2 className="text-2xl font-bold text-white">Personal Information</h2>
           </div>
-        </form>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Age</label>
+              <input 
+                type="number" 
+                name="age" 
+                value={formData.age} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Weight (kg)</label>
+              <input 
+                type="number" 
+                name="weight" 
+                value={formData.weight} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Gender</label>
+              <select 
+                name="gender" 
+                value={formData.gender} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              >
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 2: Event Details */}
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">2</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Your Target Event</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Event Name</label>
+              <input 
+                type="text" 
+                name="eventName" 
+                value={formData.eventName} 
+                onChange={handleInputChange} 
+                placeholder="e.g., Ironman 70.3, London Marathon"
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Event Duration (hours)</label>
+              <input 
+                type="number" 
+                step="0.5" 
+                name="eventDuration" 
+                value={formData.eventDuration} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Primary Sport</label>
+              <select 
+                name="sport" 
+                value={formData.sport} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              >
+                <option value="cycling">Cycling</option>
+                <option value="running">Running</option>
+                <option value="triathlon">Triathlon</option>
+                <option value="swimming">Swimming</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Expected Intensity</label>
+              <select 
+                name="intensity" 
+                value={formData.intensity} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              >
+                <option value="low">Low (Easy/Recovery pace)</option>
+                <option value="moderate">Moderate (Steady state)</option>
+                <option value="high">High (Threshold/Race pace)</option>
+                <option value="mixed">Mixed (Variable intensity)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Experience & Current Status */}
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">3</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Experience & Current Fueling</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Experience Level</label>
+              <select 
+                name="experienceLevel" 
+                value={formData.experienceLevel} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              >
+                <option value="beginner">Beginner (0-2 years)</option>
+                <option value="intermediate">Intermediate (2-5 years)</option>
+                <option value="advanced">Advanced (5+ years)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Current Comfortable Carb Intake (g/hr)</label>
+              <input 
+                type="number" 
+                name="currentCarbIntake" 
+                value={formData.currentCarbIntake} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Weekly Training Hours</label>
+              <input 
+                type="number" 
+                name="weeklyTrainingHours" 
+                value={formData.weeklyTrainingHours} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-300 font-medium mb-2">Longest Training Session (hours)</label>
+              <input 
+                type="number" 
+                step="0.5" 
+                name="longestSession" 
+                value={formData.longestSession} 
+                onChange={handleInputChange} 
+                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Step 4: GI History */}
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">4</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Gut Health History</h2>
+          </div>
+          <div className="space-y-6">
+            <div>
+              <label className="flex items-center text-slate-300 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  name="hasGiIssues" 
+                  checked={formData.hasGiIssues} 
+                  onChange={handleCheckboxChange} 
+                  className="w-5 h-5 text-orange-500 bg-slate-700 border-slate-600 rounded mr-3 focus:ring-orange-500"
+                />
+                <span className="font-medium">I have experienced GI issues during training or racing</span>
+              </label>
+            </div>
+            {formData.hasGiIssues && (
+              <div className="bg-slate-700/30 rounded-lg p-6 border border-slate-600">
+                <label className="block text-slate-300 font-medium mb-4">What symptoms have you experienced?</label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea', 'Vomiting'].map(symptom => (
+                    <label key={symptom} className="flex items-center text-slate-300 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 text-orange-500 bg-slate-700 border-slate-600 rounded mr-2 focus:ring-orange-500"
+                      />
+                      <span className="text-sm">{symptom}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-between items-center pt-8">
+          <button 
+            onClick={onBack} 
+            className="px-6 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 hover:bg-slate-600 transition-colors"
+          >
+            ← Back to Dashboard
+          </button>
+          <button 
+            onClick={handleSubmit} 
+            className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl"
+          >
+            Calculate My Carb Strategy
+          </button>
+        </div>
       </div>
     </div>
   );
