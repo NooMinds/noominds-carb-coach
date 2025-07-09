@@ -947,7 +947,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
             <div>
               <h3 className="text-green-400 font-bold text-lg">Session Logged Successfully!</h3>
-              <p className="text-green-300">Your training data has been saved and will update your progress metrics.</p>
+              <p className="text-green-300">Your training data has been saved.</p>
             </div>
           </div>
         </div>
@@ -1093,7 +1093,67 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
                   }`}>
                     {formData.symptomSeverity}
                   </div>
-                  <div // ============================================================================
+                  <div className={`text-xs ${
+                    formData.symptomSeverity <= 3 ? 'text-green-400' :
+                    formData.symptomSeverity <= 6 ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {formData.symptomSeverity <= 3 ? 'Good' :
+                     formData.symptomSeverity <= 6 ? 'Moderate' : 'Severe'}
+                  </div>
+                </div>
+                <span className="text-slate-400 text-sm">Severe symptoms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">4</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Additional Notes</h2>
+          </div>
+          <div>
+            <label style={labelStyle}>Session Notes (Optional)</label>
+            <textarea 
+              name="notes" 
+              value={formData.notes} 
+              onChange={handleInputChange} 
+              placeholder="e.g., Used new gel brand, felt strong throughout, stomach issues after hour 2..."
+              style={{...inputStyle, minHeight: '100px', resize: 'vertical'}}
+              rows={4}
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center pt-8">
+          <button 
+            type="button"
+            onClick={onBack} 
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#475569',
+              color: '#ffffff',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+          <button 
+            type="submit"
+            className="btn-primary text-lg px-8 py-4 shadow-lg"
+          >
+            Save Training Session
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 // PLACEHOLDER COMPONENTS (MODERN STYLING)
 // ============================================================================
 const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
