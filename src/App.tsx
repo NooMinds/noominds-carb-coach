@@ -34,6 +34,15 @@ interface AssessmentResult {
   recommendations: string[];
   symptoms: string[];
   date: string;
+  name: string;
+  email: string;
+  age: number;
+  weight: number;
+  height: number;
+  gender: string;
+  sport: string;
+  experienceLevel: string;
+  targetEvents: string[];
 }
 
 // ============================================================================
@@ -155,9 +164,24 @@ function generateRecommendations(
 // ============================================================================
 const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ onBack, onComplete }) => {
   const [formData, setFormData] = useState({
+    // Personal Details
+    name: '',
+    email: '',
+    age: 30,
+    gender: 'Female',
+    height: 170,
     weight: 70,
+    
+    // Sport & Experience
+    sport: 'Triathlon',
+    experienceLevel: 'Intermediate',
+    targetEvents: '',
+    
+    // Exercise Details
     duration: 120,
     intensity: 'moderate',
+    
+    // GI History
     giHistory: 'none',
     symptoms: [] as string[],
   });
@@ -185,7 +209,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     display: 'block'
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
     if (type === 'checkbox') {
@@ -236,13 +260,27 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
       );
       setRecommendations(generatedRecommendations);
       
+      // Split target events into array
+      const targetEventsArray = formData.targetEvents
+        ? formData.targetEvents.split(',').map(event => event.trim())
+        : [];
+      
       // Save assessment result to localStorage
       const assessmentResult: AssessmentResult = {
         targetCarbs: roundedTargetCarbs,
         giSensitivity: formData.giHistory,
         recommendations: generatedRecommendations,
         symptoms: formData.symptoms,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        name: formData.name,
+        email: formData.email,
+        age: formData.age,
+        weight: formData.weight,
+        height: formData.height,
+        gender: formData.gender,
+        sport: formData.sport,
+        experienceLevel: formData.experienceLevel,
+        targetEvents: targetEventsArray
       };
       localStorage.setItem('noominds-assessment', JSON.stringify(assessmentResult));
       
@@ -271,15 +309,77 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
 
       {!showResults ? (
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Basic Info */}
+          {/* Personal Details */}
           <div className="card">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
                 <span className="text-white font-bold">1</span>
               </div>
-              <h2 className="text-2xl font-bold text-white">Basic Information</h2>
+              <h2 className="text-2xl font-bold text-white">Personal Details</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label style={labelStyle}>Name</label>
+                <input 
+                  type="text" 
+                  name="name" 
+                  value={formData.name} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  required
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Email</label>
+                <input 
+                  type="email" 
+                  name="email" 
+                  value={formData.email} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  required
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Age</label>
+                <input 
+                  type="number" 
+                  name="age" 
+                  value={formData.age} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  min="16"
+                  max="100"
+                  required
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Gender</label>
+                <select 
+                  name="gender" 
+                  value={formData.gender} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                >
+                  <option value="Female">Female</option>
+                  <option value="Male">Male</option>
+                  <option value="Non-binary">Non-binary</option>
+                  <option value="Prefer not to say">Prefer not to say</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Height (cm)</label>
+                <input 
+                  type="number" 
+                  name="height" 
+                  value={formData.height} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  min="100"
+                  max="250"
+                  required
+                />
+              </div>
               <div>
                 <label style={labelStyle}>Weight (kg)</label>
                 <input 
@@ -296,11 +396,64 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
             </div>
           </div>
 
-          {/* Exercise Details */}
+          {/* Sport & Experience */}
           <div className="card">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
                 <span className="text-white font-bold">2</span>
+              </div>
+              <h2 className="text-2xl font-bold text-white">Sport & Experience</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label style={labelStyle}>Primary Sport</label>
+                <select 
+                  name="sport" 
+                  value={formData.sport} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                >
+                  <option value="Triathlon">Triathlon</option>
+                  <option value="Running">Running</option>
+                  <option value="Cycling">Cycling</option>
+                  <option value="Swimming">Swimming</option>
+                  <option value="Ultra Running">Ultra Running</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Experience Level</label>
+                <select 
+                  name="experienceLevel" 
+                  value={formData.experienceLevel} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                  <option value="Elite">Elite</option>
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <label style={labelStyle}>Target Events (comma separated)</label>
+                <input 
+                  type="text" 
+                  name="targetEvents" 
+                  value={formData.targetEvents} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  placeholder="e.g., London Marathon, Brighton Triathlon"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Exercise Details */}
+          <div className="card">
+            <div className="flex items-center mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+                <span className="text-white font-bold">3</span>
               </div>
               <h2 className="text-2xl font-bold text-white">Exercise Details</h2>
             </div>
@@ -338,7 +491,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
           <div className="card">
             <div className="flex items-center mb-6">
               <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
-                <span className="text-white font-bold">3</span>
+                <span className="text-white font-bold">4</span>
               </div>
               <h2 className="text-2xl font-bold text-white">GI Sensitivity</h2>
             </div>
