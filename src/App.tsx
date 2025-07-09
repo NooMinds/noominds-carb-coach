@@ -706,10 +706,23 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     /* ---------- Event readiness status rules ------------------ */
     if (!assessmentResult) {
       eventReadiness = 'Not Ready';
-    } else if (avgSymptoms > 5) {
-      eventReadiness = 'Caution';
-    } else if (sessions.length < 3) {
-      eventReadiness = 'In Progress';
+    } else {
+      // target carb / hr from the latest assessment
+      const targetCarbRate =
+        assessmentResult.targetCarbs / (assessmentResult.duration / 60);
+      const carbGap = Math.abs(targetCarbRate - avgCarbs);
+
+      if (avgSymptoms > 5) {
+        eventReadiness = 'Caution'; // high symptom burden
+      } else if (sessions.length < 3) {
+        eventReadiness = 'In Progress'; // not enough training data
+      } else if (carbGap > 25) {
+        eventReadiness = 'Caution'; // large gap between target & actual
+      } else if (carbGap > 15) {
+        eventReadiness = 'In Progress'; // moderate gap
+      } else {
+        eventReadiness = 'Ready'; // within acceptable range
+      }
     }
 
     return {
@@ -774,7 +787,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           </div>
           
           {/* Second row: 2 metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <div className="bg-slate-800/50 rounded-xl p-5">
               <h3 className="text-slate-400 mb-2">Avg Symptoms</h3>
               <div className="text-2xl font-bold text-blue-400">{metrics.avgSymptoms} <span className="text-sm">/10</span></div>
