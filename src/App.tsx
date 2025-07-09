@@ -750,32 +750,39 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       {/* Event Readiness */}
       <div className="card mb-8">
         <h2 className="text-2xl font-bold text-white mb-6">Event Readiness</h2>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-          <div className="bg-slate-800/50 rounded-xl p-5">
-            <h3 className="text-slate-400 mb-2">Status</h3>
-            <div className={`text-2xl font-bold ${
-              metrics.eventReadiness === 'Ready' ? 'text-green-400' :
-              metrics.eventReadiness === 'In Progress' ? 'text-yellow-400' : 
-              metrics.eventReadiness === 'Caution' ? 'text-orange-400' : 'text-red-400'
-            }`}>
-              {metrics.eventReadiness}
+        <div className="space-y-6">
+          {/* First row: 3 metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-800/50 rounded-xl p-5">
+              <h3 className="text-slate-400 mb-2">Status</h3>
+              <div className={`text-2xl font-bold ${
+                metrics.eventReadiness === 'Ready' ? 'text-green-400' :
+                metrics.eventReadiness === 'In Progress' ? 'text-yellow-400' : 
+                metrics.eventReadiness === 'Caution' ? 'text-orange-400' : 'text-red-400'
+              }`}>
+                {metrics.eventReadiness}
+              </div>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5">
+              <h3 className="text-slate-400 mb-2">Target Carb Rate</h3>
+              <div className="text-2xl font-bold text-orange-400">{getTargetCarbRate()} <span className="text-sm">g/hr</span></div>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5">
+              <h3 className="text-slate-400 mb-2">Avg Carb Rate</h3>
+              <div className="text-2xl font-bold text-orange-400">{metrics.avgCarbs} <span className="text-sm">g/hr</span></div>
             </div>
           </div>
-          <div className="bg-slate-800/50 rounded-xl p-5">
-            <h3 className="text-slate-400 mb-2">Target Carb Rate</h3>
-            <div className="text-2xl font-bold text-orange-400">{getTargetCarbRate()} <span className="text-sm">g/hr</span></div>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl p-5">
-            <h3 className="text-slate-400 mb-2">Avg Carb Rate</h3>
-            <div className="text-2xl font-bold text-orange-400">{metrics.avgCarbs} <span className="text-sm">g/hr</span></div>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl p-5">
-            <h3 className="text-slate-400 mb-2">Avg Symptoms</h3>
-            <div className="text-2xl font-bold text-blue-400">{metrics.avgSymptoms} <span className="text-sm">/10</span></div>
-          </div>
-          <div className="bg-slate-800/50 rounded-xl p-5">
-            <h3 className="text-slate-400 mb-2">Consistency</h3>
-            <div className="text-2xl font-bold text-green-400">{metrics.consistency}%</div>
+          
+          {/* Second row: 2 metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-slate-800/50 rounded-xl p-5">
+              <h3 className="text-slate-400 mb-2">Avg Symptoms</h3>
+              <div className="text-2xl font-bold text-blue-400">{metrics.avgSymptoms} <span className="text-sm">/10</span></div>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-5">
+              <h3 className="text-slate-400 mb-2">Consistency</h3>
+              <div className="text-2xl font-bold text-green-400">{metrics.consistency}%</div>
+            </div>
           </div>
         </div>
       </div>
