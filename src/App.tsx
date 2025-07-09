@@ -4,15 +4,21 @@ import './App.css';
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
-interface Client {
-  name: string;
-  email: string;
   age: number;
   weight: number;
   height: number;
   gender: string;
   sport: string;
   experienceLevel: string;
+  sport: string;
+  duration: number;
+  carbs: number;
+  targetEvents: string[];
+}
+
+interface Session {
+  id: string;
+  date: string;
   sport: string;
   duration: number;
   carbs: number;
@@ -23,9 +29,6 @@ interface Client {
 }
 
 interface AssessmentResult {
-  targetCarbs: number;
-  giSensitivity: string;
-  recommendations: string[];
   symptoms: string[];
   date: string;
   name: string;
