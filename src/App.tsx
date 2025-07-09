@@ -1178,8 +1178,8 @@ function App() {
     switch (currentView) {
       case 'assessment':
         return <Assessment onBack={() => setCurrentView('dashboard')} onComplete={() => setCurrentView('dashboard')} />;
-      case 'logger':
-        return <PlaceholderPage title="Session Logger" onBack={() => setCurrentView('dashboard')} />;
+case 'logger':
+  return <SessionLogger onBack={() => setCurrentView('dashboard')} onSave={() => setCurrentView('dashboard')} />;
       case 'progress':
         return <PlaceholderPage title="Progress Charts" onBack={() => setCurrentView('dashboard')} />;
       case 'event_planner':
