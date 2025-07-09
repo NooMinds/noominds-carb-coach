@@ -907,36 +907,20 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
 
 // ============================================================================
 // SESSION LOGGER COMPONENT
-    sport: 'Cycling',
-  /* ------------------------------------------------------------------
-     Initialise form fields from assessment (if available) for better UX
-  ------------------------------------------------------------------ */
-  const firstTarget =
-    assessment && assessment.targetEvents && assessment.targetEvents.length > 0
-      ? assessment.targetEvents[0]
-      : '';
-
+// ============================================================================
+const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Session, 'id'>) => void }> = ({ onBack, onSave }) => {
   const [formData, setFormData] = useState({
-    raceName: firstTarget,
-    duration: assessment ? assessment.duration : 180, // minutes
-    aidInterval: 5, // km
-    intensity: assessment ? (assessment.intensity as 'low' | 'moderate' | 'high') : 'moderate'
-  });
+    date: new Date().toISOString().split('T')[0],
+    sport: 'Cycling',
+    duration: 90,
+    carbs: 60,
+    fluids: 750,
+    symptomSeverity: 0,
+    rpe: 5,
+    notes: ''
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
-
-  /* ensure state updates if assessment changes (e.g., after new assessment) */
-  useEffect(() => {
-    if (!assessment) return;
-    setFormData(prev => ({
-      ...prev,
-      raceName: firstTarget,
-      duration: assessment.duration,
-      intensity: assessment.intensity as 'low' | 'moderate' | 'high'
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -1752,35 +1736,4 @@ const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ titl
   </div>
 );
 
-// ============================================================================
-// MAIN APP
-// ============================================================================
-function App() {
-  const [currentView, setCurrentView] = useState('dashboard');
-
-  const renderContent = () => {
-    switch (currentView) {
-      case 'assessment':
-        return <Assessment onBack={() => setCurrentView('dashboard')} onComplete={() => setCurrentView('dashboard')} />;
-      case 'logger':
-        return <SessionLogger onBack={() => setCurrentView('dashboard')} onSave={() => setCurrentView('dashboard')} />;
-      case 'progress':
-        return <PlaceholderPage title="Progress Charts" onBack={() => setCurrentView('dashboard')} />;
-      case 'event_planner':
-        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
-      case 'ai_coach':
-        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
-      case 'dashboard':
-      default:
-        return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
-      {renderContent()}
-    </div>
-  );
-}
-
-export default App;
+// 
