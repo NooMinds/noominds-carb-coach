@@ -503,21 +503,39 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     let avgCarbs = 0;
     let avgSymptoms = 0;
     let consistency = 0;
-    
-    // Calculate from sessions if available
+
     if (sessions.length > 0) {
-      avgCarbs = sessions.reduce((sum, session) => sum + (session.carbs / (session.duration / 60)), 0) / sessions.length;
-      avgSymptoms = sessions.reduce((sum, session) => sum + session.symptomSeverity, 0) / sessions.length;
-      
-      // Calculate consistency (% of days with sessions in last 7 days)
+      /* ---------- Average carbohydrate intake (g/hr) ---------- */
+      avgCarbs =
+        sessions.reduce(
+          (sum, session) => sum + session.carbs / (session.duration / 60),
+          0
+        ) / sessions.length;
+
+      /* ---------- Average symptom severity (0–10) ------------- */
+      avgSymptoms =
+        sessions.reduce(
+          (sum, session) => sum + Number(session.symptomSeverity),
+          0
+        ) / sessions.length;
+      // Clamp between 0 and 10
+      avgSymptoms = Math.max(0, Math.min(10, avgSymptoms));
+
+      /* ---------- Consistency: unique training days in last 7 d */
       const last7Days = new Date();
       last7Days.setDate(last7Days.getDate() - 7);
-      
-      const recentSessions = sessions.filter(session => new Date(session.date) >= last7Days);
-      consistency = (recentSessions.length / 7) * 100;
+
+      const recentSessions = sessions.filter(
+        session => new Date(session.date) >= last7Days
+      );
+      // Use a set of YYYY-MM-DD strings to ensure uniqueness
+      const uniqueDays = new Set(
+        recentSessions.map(s => s.date.split('T')[0])
+      );
+      consistency = Math.min(100, (uniqueDays.size / 7) * 100); // Cap at 100%
     }
-    
-    // Determine event readiness based on assessment and sessions
+
+    /* ---------- Event readiness status rules ------------------ */
     if (!assessmentResult) {
       eventReadiness = 'Not Ready';
     } else if (avgSymptoms > 5) {
@@ -525,12 +543,12 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     } else if (sessions.length < 3) {
       eventReadiness = 'In Progress';
     }
-    
+
     return {
       eventReadiness,
       avgCarbs: avgCarbs.toFixed(1),
       avgSymptoms: avgSymptoms.toFixed(1),
-      consistency: Math.round(consistency)
+      consistency: Math.round(consistency),
     };
   };
 
