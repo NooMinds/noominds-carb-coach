@@ -160,3 +160,71 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+{/* Step 1: Personal Information - FIXED VERSION */}
+<div className="card">
+  <div className="flex items-center mb-6">
+    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+      <span className="text-white font-bold">1</span>
+    </div>
+    <h2 className="text-2xl font-bold text-white">Personal Information</h2>
+  </div>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <label style={{color: '#ffffff', fontWeight: '500', marginBottom: '8px', display: 'block'}}>Age</label>
+      <input 
+        type="number" 
+        name="age" 
+        value={formData.age} 
+        onChange={handleInputChange} 
+        style={{
+          width: '100%',
+          backgroundColor: '#334155',
+          border: '1px solid #475569',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          color: '#ffffff',
+          fontSize: '16px'
+        }}
+      />
+    </div>
+    <div>
+      <label style={{color: '#ffffff', fontWeight: '500', marginBottom: '8px', display: 'block'}}>Weight (kg)</label>
+      <input 
+        type="number" 
+        name="weight" 
+        value={formData.weight} 
+        onChange={handleInputChange} 
+        style={{
+          width: '100%',
+          backgroundColor: '#334155',
+          border: '1px solid #475569',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          color: '#ffffff',
+          fontSize: '16px'
+        }}
+      />
+    </div>
+    <div>
+      <label style={{color: '#ffffff', fontWeight: '500', marginBottom: '8px', display: 'block'}}>Gender</label>
+      <select 
+        name="gender" 
+        value={formData.gender} 
+        onChange={handleInputChange} 
+        style={{
+          width: '100%',
+          backgroundColor: '#334155',
+          border: '1px solid #475569',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          color: '#ffffff',
+          fontSize: '16px'
+        }}
+      >
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
+  </div>
+</div>
