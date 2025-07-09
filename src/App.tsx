@@ -668,34 +668,62 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </div>
         </div>
 
-        {/* Step 4: GI History */}
-        <div className="card">
-          <div className="flex items-center mb-6">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
-              <span className="text-white font-bold">4</span>
-            </div>
-            <h2 className="text-2xl font-bold text-white">Gut Health History</h2>
-          </div>
-          <div className="space-y-6">
-            <div>
-              <label className="flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  name="hasGiIssues" 
-                  checked={formData.hasGiIssues} 
-                  onChange={handleCheckboxChange} 
-                  style={{
-                    width: '20px',
-                    height: '20px',
-                    marginRight: '12px',
-                    accentColor: '#f97316'
-                  }}
-                />
-                <span style={{color: '#ffffff', fontWeight: '500'}}>I have experienced GI issues during training or racing</span>
-              </label>
-            </div>
-          </div>
+       {/* Step 4: GI History - FIXED VERSION */}
+<div className="card">
+  <div className="flex items-center mb-6">
+    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+      <span className="text-white font-bold">4</span>
+    </div>
+    <h2 className="text-2xl font-bold text-white">Gut Health History</h2>
+  </div>
+  <div className="space-y-6">
+    <div>
+      <label className="flex items-center cursor-pointer">
+        <input 
+          type="checkbox" 
+          name="hasGiIssues" 
+          checked={formData.hasGiIssues} 
+          onChange={handleCheckboxChange} 
+          style={{
+            width: '20px',
+            height: '20px',
+            marginRight: '12px',
+            accentColor: '#f97316'
+          }}
+        />
+        <span style={{color: '#ffffff', fontWeight: '500'}}>I have experienced GI issues during training or racing</span>
+      </label>
+    </div>
+    
+    {/* This section shows when checkbox is ticked */}
+    {formData.hasGiIssues && (
+      <div style={{
+        backgroundColor: 'rgba(51, 65, 85, 0.3)',
+        borderRadius: '12px',
+        padding: '24px',
+        border: '1px solid #475569'
+      }}>
+        <label style={{...labelStyle, marginBottom: '16px'}}>What symptoms have you experienced? (Check all that apply)</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea', 'Vomiting'].map(symptom => (
+            <label key={symptom} className="flex items-center cursor-pointer">
+              <input 
+                type="checkbox" 
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  marginRight: '8px',
+                  accentColor: '#f97316'
+                }}
+              />
+              <span style={{color: '#ffffff', fontSize: '14px'}}>{symptom}</span>
+            </label>
+          ))}
         </div>
+      </div>
+    )}
+  </div>
+</div>
 
         {/* Action Buttons */}
         <div className="flex justify-between items-center pt-8">
