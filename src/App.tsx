@@ -1268,16 +1268,22 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleGenerate = (e: FormEvent) => {
     e.preventDefault();
     const blocks: RacePlanBlock[] = [];
-    const totalBlocks = Math.ceil(formData.duration / 20); // every 20 min
+    /* -----------------------------------------------------------
+       Create plan blocks every 60 minutes instead of every 20 min
+       ----------------------------------------------------------- */
+    const INTERVAL = 60; // minutes
+    const totalBlocks = Math.ceil(formData.duration / INTERVAL);
     for (let i = 0; i < totalBlocks; i++) {
-      const mins = i * 20;
+      const mins = i * INTERVAL;
       const timeLabel = `${Math.floor(mins / 60)
         .toString()
         .padStart(2, '0')}:${(mins % 60).toString().padStart(2, '0')}`;
       blocks.push({
         time: timeLabel,
-        carbs: `${(targetRate / 3).toFixed(0)} g`,
-        fluids: `200 ml`
+        /* full hourly carb target */
+        carbs: `${targetRate.toFixed(0)} g`,
+        /* ~650 ml fluids per hour (mid-point of 600-750 ml) */
+        fluids: `650 ml`
       });
     }
     setPlan(blocks);
