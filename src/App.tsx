@@ -293,16 +293,37 @@ function generateAthletePDF(client: Client) {
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const mockClients: Client[] = [
-  {
-    profile: { id: 'client-1', name: 'Craig Elliott', email: 'craig@example.com', sport: 'Cycling' },
-    sessions: [
-      { id: 's1-1', date: '2025-07-01', duration: 120, carbs: 100, symptomSeverity: 2, sport: 'Cycling', rpe: 6, fluids: 1000, notes: 'Good session.' },
-      { id: 's1-2', date: '2025-07-03', duration: 75, carbs: 60, symptomSeverity: 1, sport: 'Cycling', rpe: 7, fluids: 750, notes: 'Felt strong.' },
-    ],
-    event: { name: '100 Mile Sportive', date: '2025-09-15', type: 'Cycling', targetCarb: 75 },
+// Get saved assessment results or use defaults
+const getSavedAssessment = () => {
+  try {
+    const saved = localStorage.getItem('noominds-assessment-results');
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.log('No saved assessment found');
+  }
+  return {
+    targetCarb: 75,
+    eventName: 'Your Next Event',
+    eventType: 'Cycling',
+    eventDate: '2025-12-31'
+  };
+};
+
+const mockClient: Client = {
+  profile: { id: 'user-1', name: 'Craig Elliott', email: 'craig@example.com', sport: 'Cycling' },
+  sessions: [
+    { id: 's1', date: '2025-07-01', duration: 120, carbs: 100, symptomSeverity: 2, sport: 'Cycling', rpe: 6, fluids: 1000, notes: 'Good session' },
+    { id: 's2', date: '2025-07-03', duration: 90, carbs: 70, symptomSeverity: 1, sport: 'Cycling', rpe: 7, fluids: 800, notes: 'Felt strong' },
+  ],
+  event: {
+    name: getSavedAssessment().eventName,
+    date: getSavedAssessment().eventDate,
+    type: getSavedAssessment().eventType,
+    targetCarb: getSavedAssessment().targetCarb
   },
-];
+};
 
 // ============================================================================
 // MODERN COMPONENTS
@@ -393,18 +414,30 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
     setFormData(prev => ({ ...prev, [name]: checked }));
   };
 
-  const handleSubmit = () => {
-    try {
-      console.log("Button clicked!");
-      console.log("Form data:", formData);
-      const calculatedResult = calculateTargetCarbs(formData);
-      console.log("Calculated result:", calculatedResult);
-      setResult(calculatedResult);
-    } catch (error) {
-      console.error("Calculation error:", error);
-      alert("Error calculating carbs: " + error.message);
-    }
-  };
+const handleSubmit = () => {
+  try {
+    console.log("Button clicked!");
+    console.log("Form data:", formData);
+    const calculatedResult = calculateTargetCarbs(formData);
+    console.log("Calculated result:", calculatedResult);
+    setResult(calculatedResult);
+    
+    // Save the assessment results to update Dashboard
+    const updatedProfile = {
+      targetCarb: calculatedResult.targetCarbs,
+      eventName: formData.eventName || 'Your Event',
+      eventType: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1),
+      eventDate: formData.eventDate || '2025-12-31'
+    };
+    
+    // Store in localStorage so Dashboard can read it
+    localStorage.setItem('noominds-assessment-results', JSON.stringify(updatedProfile));
+    
+  } catch (error) {
+    console.error("Calculation error:", error);
+    alert("Error calculating carbs: " + error.message);
+  }
+};
 
   // Input style object
   const inputStyle = {
