@@ -1736,4 +1736,62 @@ const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ titl
   </div>
 );
 
+// ============================================================================
+// MAIN APP COMPONENT
+// ============================================================================
+
+const App: React.FC = () => {
+  // Manage current view for simple client-side navigation
+  const [currentView, setCurrentView] = useState<
+    'dashboard' |
+    'assessment' |
+    'logger' |
+    'progress' |
+    'event_planner' |
+    'ai_coach'
+  >('dashboard');
+
+  // Decide which component to render based on currentView
+  const renderContent = () => {
+    switch (currentView) {
+      case 'assessment':
+        return (
+          <Assessment
+            onBack={() => setCurrentView('dashboard')}
+            onComplete={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'logger':
+        return (
+          <SessionLogger
+            onBack={() => setCurrentView('dashboard')}
+            onSave={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'progress':
+        return (
+          <PlaceholderPage
+            title="Progress Charts"
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'event_planner':
+        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
+      case 'ai_coach':
+        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
+      case 'dashboard':
+      default:
+        return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+      {renderContent()}
+    </div>
+  );
+};
+
+export default App;
+
 // 
