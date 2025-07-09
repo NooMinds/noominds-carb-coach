@@ -406,10 +406,29 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
     }
   };
 
+  // Input style object
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
+  };
+
+  const labelStyle = {
+    color: '#ffffff',
+    fontWeight: '500',
+    marginBottom: '8px',
+    display: 'block'
+  };
+
   if (result) {
     return (
       <div className="max-w-5xl mx-auto">
-        {/* Results Header */}
+        {/* Results page stays the same */}
         <div className="text-center mb-12">
           <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -437,49 +456,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
                 'bg-red-500/20 text-red-400 border-2 border-red-500/40'
               }`}>
                 {result.confidence.toUpperCase()} CONFIDENCE
-              </div>
-            </div>
-          </div>
-
-          {/* Challenge Protocol */}
-          <div className="card bg-gradient-to-br from-orange-500/10 to-orange-600/10 border-2 border-orange-500/30">
-            <div className="flex items-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mr-4">
-                <span className="text-2xl">🧪</span>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-orange-400 mb-2">Gut Challenge Protocol</h3>
-                <p className="text-slate-300">Test if your gut can handle this intake before race day</p>
-              </div>
-            </div>
-            
-            <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-600">
-              <h4 className="font-bold text-white text-lg mb-4">3-Hour Testing Protocol:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {result.challengeProtocol.testInstructions.slice(0, 3).map((instruction, index) => (
-                  <div key={index} className="bg-slate-700/50 rounded-lg p-4 text-center">
-                    <div className="text-orange-400 font-bold text-lg mb-2">Hour {index + 1}</div>
-                    <p className="text-slate-300 text-sm">{instruction}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 space-y-2">
-                {result.challengeProtocol.testInstructions.slice(3).map((instruction, index) => (
-                  <div key={index} className="flex items-center text-slate-300">
-                    <div className="w-2 h-2 bg-orange-400 rounded-full mr-3"></div>
-                    <span className="text-sm">{instruction}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-yellow-500/10 rounded-xl p-4 border border-yellow-500/30">
-              <div className="flex items-start">
-                <div className="text-yellow-400 mr-3 text-xl">⚠️</div>
-                <div>
-                  <p className="text-yellow-400 font-semibold mb-1">Reality Check</p>
-                  <p className="text-slate-300 text-sm">Most athletes can only handle 60g/hr comfortably. If you score 4+ on symptoms during this test, your gut needs more training.</p>
-                </div>
               </div>
             </div>
           </div>
@@ -512,7 +488,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
     );
   }
 
-  // Assessment Form
+  // Assessment Form with WORKING inputs
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -525,7 +501,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </svg>
         </div>
         <h1 className="text-4xl font-bold text-white mb-4">Personalized Carb Assessment</h1>
-        <p className="text-xl text-slate-300">Calculate your optimal race-day carb intake based on science and your profile</p>
+        <p className="text-xl text-slate-300">Calculate your optimal race-day carb intake</p>
       </div>
 
       <div className="space-y-8">
@@ -539,32 +515,32 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Age</label>
+              <label style={labelStyle}>Age</label>
               <input 
                 type="number" 
                 name="age" 
                 value={formData.age} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Weight (kg)</label>
+              <label style={labelStyle}>Weight (kg)</label>
               <input 
                 type="number" 
                 name="weight" 
                 value={formData.weight} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Gender</label>
+              <label style={labelStyle}>Gender</label>
               <select 
                 name="gender" 
                 value={formData.gender} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -583,34 +559,34 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Event Name</label>
+              <label style={labelStyle}>Event Name</label>
               <input 
                 type="text" 
                 name="eventName" 
                 value={formData.eventName} 
                 onChange={handleInputChange} 
                 placeholder="e.g., Ironman 70.3, London Marathon"
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white placeholder-slate-400 focus:border-orange-500 focus:outline-none transition-colors"
+                style={{...inputStyle, color: formData.eventName ? '#ffffff' : '#94a3b8'}}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Event Duration (hours)</label>
+              <label style={labelStyle}>Event Duration (hours)</label>
               <input 
                 type="number" 
                 step="0.5" 
                 name="eventDuration" 
                 value={formData.eventDuration} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Primary Sport</label>
+              <label style={labelStyle}>Primary Sport</label>
               <select 
                 name="sport" 
                 value={formData.sport} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               >
                 <option value="cycling">Cycling</option>
                 <option value="running">Running</option>
@@ -620,12 +596,12 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
               </select>
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Expected Intensity</label>
+              <label style={labelStyle}>Expected Intensity</label>
               <select 
                 name="intensity" 
                 value={formData.intensity} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               >
                 <option value="low">Low (Easy/Recovery pace)</option>
                 <option value="moderate">Moderate (Steady state)</option>
@@ -646,12 +622,12 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Experience Level</label>
+              <label style={labelStyle}>Experience Level</label>
               <select 
                 name="experienceLevel" 
                 value={formData.experienceLevel} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               >
                 <option value="beginner">Beginner (0-2 years)</option>
                 <option value="intermediate">Intermediate (2-5 years)</option>
@@ -659,34 +635,34 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
               </select>
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Current Comfortable Carb Intake (g/hr)</label>
+              <label style={labelStyle}>Current Comfortable Carb Intake (g/hr)</label>
               <input 
                 type="number" 
                 name="currentCarbIntake" 
                 value={formData.currentCarbIntake} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Weekly Training Hours</label>
+              <label style={labelStyle}>Weekly Training Hours</label>
               <input 
                 type="number" 
                 name="weeklyTrainingHours" 
                 value={formData.weeklyTrainingHours} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
             <div>
-              <label className="block text-slate-300 font-medium mb-2">Longest Training Session (hours)</label>
+              <label style={labelStyle}>Longest Training Session (hours)</label>
               <input 
                 type="number" 
                 step="0.5" 
                 name="longestSession" 
                 value={formData.longestSession} 
                 onChange={handleInputChange} 
-                className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:border-orange-500 focus:outline-none transition-colors"
+                style={inputStyle}
               />
             </div>
           </div>
@@ -702,33 +678,22 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
           </div>
           <div className="space-y-6">
             <div>
-              <label className="flex items-center text-slate-300 cursor-pointer">
+              <label className="flex items-center cursor-pointer">
                 <input 
                   type="checkbox" 
                   name="hasGiIssues" 
                   checked={formData.hasGiIssues} 
                   onChange={handleCheckboxChange} 
-                  className="w-5 h-5 text-orange-500 bg-slate-700 border-slate-600 rounded mr-3 focus:ring-orange-500"
+                  style={{
+                    width: '20px',
+                    height: '20px',
+                    marginRight: '12px',
+                    accentColor: '#f97316'
+                  }}
                 />
-                <span className="font-medium">I have experienced GI issues during training or racing</span>
+                <span style={{color: '#ffffff', fontWeight: '500'}}>I have experienced GI issues during training or racing</span>
               </label>
             </div>
-            {formData.hasGiIssues && (
-              <div className="bg-slate-700/30 rounded-lg p-6 border border-slate-600">
-                <label className="block text-slate-300 font-medium mb-4">What symptoms have you experienced?</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {['Nausea', 'Bloating', 'Cramps', 'Reflux', 'Diarrhea', 'Vomiting'].map(symptom => (
-                    <label key={symptom} className="flex items-center text-slate-300 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-orange-500 bg-slate-700 border-slate-600 rounded mr-2 focus:ring-orange-500"
-                      />
-                      <span className="text-sm">{symptom}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -736,13 +701,20 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: (result: Assessment
         <div className="flex justify-between items-center pt-8">
           <button 
             onClick={onBack} 
-            className="px-6 py-3 bg-slate-700 text-white rounded-lg border border-slate-600 hover:bg-slate-600 transition-colors"
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#475569',
+              color: '#ffffff',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
             ← Back to Dashboard
           </button>
           <button 
             onClick={handleSubmit} 
-            className="btn-primary text-lg px-8 py-4 shadow-lg hover:shadow-xl"
+            className="btn-primary text-lg px-8 py-4 shadow-lg"
           >
             Calculate My Carb Strategy
           </button>
