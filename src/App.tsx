@@ -94,17 +94,14 @@ function calculateTargetCarbs(
   if (duration >= 150) { // 2.5+ hours
     durationFactor = 1.1; // 10% increase for longer events
   }
-  
-  // Adjust for GI sensitivity
-  let giFactor = 1.0;
-  if (giSensitivity === 'high') {
-    giFactor = 0.7; // Reduce by 30% for sensitive individuals
-  } else if (giSensitivity === 'moderate') {
-    giFactor = 0.85; // Reduce by 15% for moderate sensitivity
-  }
-  
-  // Calculate target carbs per hour
-  const targetCarbsPerHour = baseRate * durationFactor * giFactor;
+
+  /* ------------------------------------------------------------------
+     GI sensitivity should NOT reduce the physiological carb requirement.
+     It will be used purely for visual / tracking purposes elsewhere.
+     ------------------------------------------------------------------ */
+
+  // Calculate target carbs per hour (no GI penalty)
+  const targetCarbsPerHour = baseRate * durationFactor;
   
   // Calculate total carbs for the session
   const totalSessionCarbs = targetCarbsPerHour * (duration / 60);
