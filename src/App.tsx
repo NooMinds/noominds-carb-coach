@@ -1213,6 +1213,463 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
 };
 
 // ============================================================================
+// EVENT PLANNER COMPONENT
+// ============================================================================
+interface RacePlanBlock {
+  time: string;
+  carbs: string;
+  fluids: string;
+}
+
+const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  // pull assessment for target carb rate & GI flag
+  const assessment: AssessmentResult | null = JSON.parse(
+    localStorage.getItem('noominds-assessment') || 'null'
+  );
+  const targetRate =
+    assessment && assessment.duration
+      ? assessment.targetCarbs / (assessment.duration / 60)
+      : 60; // sensible default
+
+  const [formData, setFormData] = useState({
+    raceName: '',
+    duration: 180, // minutes
+    aidInterval: 5, // km
+    intensity: assessment ? assessment.intensity : 'moderate'
+  });
+  const [plan, setPlan] = useState<RacePlanBlock[] | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
+  };
+  const labelStyle = {
+    color: '#ffffff',
+    fontWeight: '500',
+    marginBottom: '8px',
+    display: 'block'
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? Number(value) : value
+    }));
+  };
+
+  const handleGenerate = (e: FormEvent) => {
+    e.preventDefault();
+    const blocks: RacePlanBlock[] = [];
+    const totalBlocks = Math.ceil(formData.duration / 20); // every 20 min
+    for (let i = 0; i < totalBlocks; i++) {
+      const mins = i * 20;
+      const timeLabel = `${Math.floor(mins / 60)
+        .toString()
+        .padStart(2, '0')}:${(mins % 60).toString().padStart(2, '0')}`;
+      blocks.push({
+        time: timeLabel,
+        carbs: `${(targetRate / 3).toFixed(0)} g`,
+        fluids: `200 ml`
+      });
+    }
+    setPlan(blocks);
+    setSaved(false);
+  };
+
+  const handleSave = () => {
+    if (!plan) return;
+    const stored = JSON.parse(localStorage.getItem('noominds-event-plans') || '[]');
+    stored.push({
+      ...formData,
+      created: new Date().toISOString(),
+      plan
+    });
+    localStorage.setItem('noominds-event-plans', JSON.stringify(stored));
+    setSaved(true);
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-12">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 4h18v18H3z"></path>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">Event Planner</h1>
+        <p className="text-xl text-slate-300">Build your race-day nutrition plan</p>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleGenerate} className="space-y-8">
+        <div className="card">
+          <div className="flex items-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
+              <span className="text-white font-bold">1</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white">Race Details</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label style={labelStyle}>Race Name</label>
+              <input
+                type="text"
+                name="raceName"
+                value={formData.raceName}
+                onChange={handleChange}
+                style={inputStyle}
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Expected Duration (minutes)</label>
+              <input
+                type="number"
+                name="duration"
+                value={formData.duration}
+                onChange={handleChange}
+                style={inputStyle}
+                min={30}
+                required
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Aid Station Interval (km)</label>
+              <input
+                type="number"
+                name="aidInterval"
+                value={formData.aidInterval}
+                onChange={handleChange}
+                style={inputStyle}
+                min={2}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Race Intensity</label>
+              <select name="intensity" value={formData.intensity} onChange={handleChange} style={inputStyle}>
+                <option value="low">Low</option>
+                <option value="moderate">Moderate</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#475569',
+              color: '#ffffff',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            ← Back to Dashboard
+          </button>
+          <button type="submit" className="btn-primary px-8 py-4 shadow-lg">
+            Generate Plan
+          </button>
+        </div>
+      </form>
+
+      {/* Plan Preview */}
+      {plan && (
+        <div className="card mt-8">
+          <h2 className="text-2xl font-bold text-white mb-4">Nutrition Timeline</h2>
+          <div className="grid grid-cols-3 gap-4 text-slate-300 font-semibold">
+            <span>Time</span>
+            <span>Carbs</span>
+            <span>Fluids</span>
+            {plan.map(block => (
+              <React.Fragment key={block.time}>
+                <span>{block.time}</span>
+                <span>{block.carbs}</span>
+                <span>{block.fluids}</span>
+              </React.Fragment>
+            ))}
+          </div>
+          {assessment && (
+            <p className="text-slate-400 mt-6">
+              GI Sensitivity: {assessment.giSensitivity === 'high' ? '🔴 High' : assessment.giSensitivity === 'moderate' ? '🟠 Moderate' : '🟢 Low'}
+            </p>
+          )}
+          <button
+            onClick={handleSave}
+            className="btn-primary mt-6 px-8 py-3 shadow-lg"
+          >
+            Save Plan
+          </button>
+          {saved && <p className="text-green-400 mt-3">Plan saved!</p>}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============================================================================
+// AI CARB COACH COMPONENT
+// ============================================================================
+interface Message {
+  id: string;
+  type: 'user' | 'coach';
+  text: string;
+  timestamp: Date;
+}
+
+const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      type: 'coach',
+      text: 'Hi there! I\'m your AI Carb Coach. How can I help with your nutrition questions today?',
+      timestamp: new Date()
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const assessment = JSON.parse(localStorage.getItem('noominds-assessment') || 'null');
+  const sessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
+
+  // Quick questions
+  const quickQuestions = [
+    "How much should I eat before my race?",
+    "What if I get stomach issues?",
+    "Best carb sources for long events?",
+    "How to avoid bonking?",
+    "When should I start fueling?"
+  ];
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSendMessage = (e: FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      text: inputText,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Generate AI response
+    setTimeout(() => {
+      const response = generateResponse(inputText);
+      const coachMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'coach',
+        text: response,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, coachMessage]);
+    }, 500);
+    
+    setInputText('');
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      text: question,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Generate AI response
+    setTimeout(() => {
+      const response = generateResponse(question);
+      const coachMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'coach',
+        text: response,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, coachMessage]);
+    }, 500);
+  };
+
+  const generateResponse = (question: string): string => {
+    // Personalized responses based on assessment data
+    const targetCarbRate = assessment ? 
+      (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1) : '60';
+    const giSensitivity = assessment ? assessment.giSensitivity : 'moderate';
+    const sport = assessment ? assessment.sport : 'endurance sports';
+    const avgSymptoms = sessions.length > 0 ? 
+      (sessions.reduce((sum: number, s: any) => sum + s.symptomSeverity, 0) / sessions.length).toFixed(1) : 'unknown';
+    
+    // Normalize question for matching
+    const normalizedQuestion = question.toLowerCase();
+    
+    // Pre-race nutrition
+    if (normalizedQuestion.includes('before race') || normalizedQuestion.includes('pre-race') || normalizedQuestion.includes('before event')) {
+      if (giSensitivity === 'high') {
+        return `Based on your high GI sensitivity, I recommend a light meal 3-4 hours before your race with about 1-2g of carbs per kg of body weight. Stick to easily digestible options like white rice, toast with honey, or a low-fiber cereal. Avoid high-fiber, high-fat, and high-protein foods. In the final hour, you might try 30-40g of liquid carbs if you've tested this in training.`;
+      } else {
+        return `For pre-race nutrition, aim for 2-4g of carbs per kg of body weight in a meal 3-4 hours before your event. For ${sport}, good options include oatmeal with banana and honey, toast with jam, or a bagel with light toppings. In the 30-60 minutes before, you can top up with 30-60g of quick-release carbs like a sports drink or gel if you've practiced this in training.`;
+      }
+    }
+    
+    // Stomach issues
+    if (normalizedQuestion.includes('stomach') || normalizedQuestion.includes('gi issues') || normalizedQuestion.includes('gut problems')) {
+      if (avgSymptoms && Number(avgSymptoms) > 5) {
+        return `I see you've been experiencing significant gut symptoms (${avgSymptoms}/10 on average). To reduce these issues: 1) Start with liquid carbs like sports drinks, 2) Try multiple transportable carbs (glucose + fructose) in a 2:1 ratio, 3) Practice your race nutrition in training to adapt your gut, 4) Consider reducing fiber intake 24-48 hours before big sessions, 5) Try smaller, more frequent intake rather than large amounts at once. If symptoms persist, consider consulting with a sports dietitian.`;
+      } else {
+        return `For gut issues during exercise: 1) Train your gut by gradually increasing carb intake during training, 2) Start with easily digestible carbs like maltodextrin-based products, 3) Stay well hydrated, 4) Avoid high-fiber foods before exercise, 5) Try different carb sources to find what works for you, 6) Consider multiple transportable carbs (glucose + fructose) for better absorption, 7) Practice your race nutrition strategy in training.`;
+      }
+    }
+    
+    // Carb sources
+    if (normalizedQuestion.includes('carb sources') || normalizedQuestion.includes('best carbs') || normalizedQuestion.includes('what carbs')) {
+      if (giSensitivity === 'high') {
+        return `With your high GI sensitivity, focus on easily digestible carb sources: 1) Sports drinks with glucose/maltodextrin, 2) Isotonic gels (easier on the stomach), 3) White rice cakes, 4) Low-fiber energy bars, 5) Ripe bananas. Start with small amounts and gradually increase. Your target is ${targetCarbRate}g/hr, but build up to this gradually in training.`;
+      } else {
+        return `For ${sport}, especially during longer events, good carb sources include: 1) Sports drinks (60-80g carbs/liter), 2) Energy gels (20-30g carbs each), 3) Energy bars (25-40g carbs), 4) Bananas (~25g carbs), 5) Rice cakes, 6) Dates or dried fruit, 7) Honey sandwiches. For optimal absorption at your target rate of ${targetCarbRate}g/hr, consider using multiple transportable carbs (glucose + fructose) in a 2:1 ratio.`;
+      }
+    }
+    
+    // Bonking
+    if (normalizedQuestion.includes('bonk') || normalizedQuestion.includes('hitting the wall') || normalizedQuestion.includes('energy crash')) {
+      return `To avoid bonking (hitting the wall): 1) Start fueling early - within the first 30 minutes, 2) Aim for consistent intake of ${targetCarbRate}g of carbs per hour, 3) Don't wait until you feel hungry or tired, 4) Practice your nutrition strategy in training, 5) Carb-load 24-48 hours before long events, 6) Start with full glycogen stores (pre-event nutrition), 7) Consider caffeine for longer events (3-6mg/kg body weight), 8) Stay hydrated - dehydration accelerates glycogen depletion.`;
+    }
+    
+    // When to start fueling
+    if (normalizedQuestion.includes('when') && (normalizedQuestion.includes('start') || normalizedQuestion.includes('begin')) && (normalizedQuestion.includes('fuel') || normalizedQuestion.includes('eating') || normalizedQuestion.includes('nutrition'))) {
+      return `For optimal performance, start fueling early in your session - within the first 15-30 minutes. Don't wait until you feel hungry or low on energy. For sessions under 60-75 minutes, you may not need additional carbs if you're well-fueled beforehand. For longer sessions, begin with small amounts (15-30g) in the first 30 minutes, then aim for steady intake to reach your target of ${targetCarbRate}g/hr. This prevents glycogen depletion and maintains blood glucose levels throughout your session.`;
+    }
+    
+    // Default response with personalization
+    return `As your nutrition coach, I'd recommend focusing on consuming around ${targetCarbRate}g of carbs per hour during your ${sport} sessions. This is based on your personal assessment and training data. Remember that consistent practice with your race nutrition strategy is key to gut training. Is there a specific aspect of sports nutrition you'd like more detailed advice on?`;
+  };
+
+  // Input and chat styling
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
+        <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
+      </div>
+
+      {/* Quick Questions */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {quickQuestions.map((question, index) => (
+          <button
+            key={index}
+            onClick={() => handleQuickQuestion(question)}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full text-sm transition-colors"
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat Container */}
+      <div className="card mb-6 p-4 h-96 overflow-y-auto">
+        <div className="space-y-4">
+          {messages.map(message => (
+            <div 
+              key={message.id} 
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div 
+                className={`max-w-3/4 rounded-2xl px-4 py-3 ${
+                  message.type === 'user' 
+                    ? 'bg-orange-500 text-white rounded-tr-none' 
+                    : 'bg-slate-700 text-slate-200 rounded-tl-none'
+                }`}
+              >
+                <p>{message.text}</p>
+                <p className={`text-xs mt-1 ${
+                  message.type === 'user' ? 'text-orange-200' : 'text-slate-400'
+                }`}>
+                  {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Message Input */}
+      <form onSubmit={handleSendMessage} className="flex gap-2">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Type your nutrition question..."
+          style={inputStyle}
+          className="flex-grow"
+        />
+        <button 
+          type="submit"
+          className="btn-primary px-6"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+
+      {/* Back Button */}
+      <div className="mt-8 text-center">
+        <button 
+          onClick={onBack}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#475569',
+            color: '#ffffff',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
 // PLACEHOLDER COMPONENTS (MODERN STYLING)
 // ============================================================================
 const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
@@ -1242,9 +1699,9 @@ function App() {
       case 'progress':
         return <PlaceholderPage title="Progress Charts" onBack={() => setCurrentView('dashboard')} />;
       case 'event_planner':
-        return <PlaceholderPage title="Event Planner" onBack={() => setCurrentView('dashboard')} />;
+        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
       case 'ai_coach':
-        return <PlaceholderPage title="AI Coach" onBack={() => setCurrentView('dashboard')} />;
+        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
       case 'dashboard':
       default:
         return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
