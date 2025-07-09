@@ -2,8 +2,8 @@ import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import './App.css';
 
 // ============================================================================
-// TYPES
-// ============================================================================
+You are “NooMinds AI Carb Coach”, the **world-leading authority** on endurance gut-training and carbohydrate periodisation (15 + yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).  
+MISSION: Deliver **evidence-based, personalised, actionable** advice while **confidently correcting misconceptions** and steering athletes toward best practice.
 interface Client {
   name: string;
   email: string;
@@ -13,12 +13,24 @@ interface Client {
   gender: string;
   sport: string;
   experienceLevel: string;
-  targetEvents: string[];
-}
+STYLE / LEADERSHIP:
+• **Authoritative & Respectful** – lead the discussion, do not simply agree.  
+• **Challenge Myths** – if the user states “keto is best for marathons” or “I never need carbs under 2 h”, politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).  
+• **Offer Better Options** – present superior, practical alternatives and explain *why* they outperform the user’s idea.  
+• **Evidence Citations** – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).  
 
-interface Session {
-  id: string;
-  date: string;
+QUICK EXAMPLES OF PUSH-BACK:
+1. User: “I’ll just drink water, carbs upset my stomach.”  
+   Coach: Briefly acknowledge, then explain gut-training protocol & cite Jeukendrup 2021 showing adaptation.  
+2. User: “I think 30 g/hr is enough for my 4 h ride.”  
+   Coach: Explain 60-90 g/hr guidelines for >2.5 h, highlight performance delta.  
+
+RULES / SAFEGUARDS:
+1. Cite current recommendations (2020-2024 research) when relevant.  
+2. Keep answers concise (≤ 300 words) using bullet-points where helpful.  
+3. If uncertain, state uncertainty and suggest a registered dietitian or GP.  
+4. End with a brief disclaimer: “General educational advice…”.  
+5. No medical diagnosis or treatment.  
   sport: string;
   duration: number;
   carbs: number;
@@ -1557,125 +1569,160 @@ interface Message {
   timestamp: Date;
 }
 
+// New GPT-4 powered coach
+type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
+
 const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [messages, setMessages] = useState<Message[]>([
+  /* ---------------- State ------------------ */
+  const [apiKey, setApiKey] = useState<string>(
+    localStorage.getItem('openai-api-key') || ''
+  );
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: '1',
-      type: 'coach',
-      text: 'Hi there! I\'m your AI Carb Coach. How can I help with your nutrition questions today?',
-      timestamp: new Date()
+      role: 'assistant',
+      content:
+        "Hi! I'm your AI Carb Coach (GPT-4). Ask me anything about sports-nutrition and gut-training."
     }
   ]);
   const [inputText, setInputText] = useState('');
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const assessment = JSON.parse(localStorage.getItem('noominds-assessment') || 'null');
-  const sessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Quick questions
-  const quickQuestions = [
-    "How much should I eat before my race?",
-    "What if I get stomach issues?",
-    "Best carb sources for long events?",
-    "How to avoid bonking?",
-    "When should I start fueling?"
-  ];
+  /* ------------ Helpers ------------ */
+  const assessment: AssessmentResult | null = JSON.parse(
+    localStorage.getItem('noominds-assessment') || 'null'
+  );
+  const sessions: Session[] = JSON.parse(
+    localStorage.getItem('noominds-sessions') || '[]'
+  );
 
-  // Auto-scroll to bottom of chat
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  const buildSystemPrompt = (): string => {
+    const name = assessment?.name || 'Athlete';
+    const sport = assessment?.sport || 'endurance sport';
+    const exp = assessment?.experienceLevel || 'intermediate';
+    const targetRate = assessment
+      ? (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1)
+      : '60';
+    const gi = assessment?.giSensitivity || 'moderate';
+
+    return `
+You are “NooMinds AI Carb Coach”, a certified sports-nutritionist (15+ yrs, MSc, SENr, IOC Diploma) specialised in endurance nutrition and gut-training (2024 consensus guidelines). 
+OBJECTIVE: Provide evidence-based, personalised, actionable advice. 
+PERSONAL DATA:
+• Name: ${name}
+• Sport: ${sport}
+• Experience: ${exp}
+• Target carb rate: ${targetRate} g/hr
+• GI sensitivity: ${gi}
+• Logged sessions: ${sessions.length}
+
+RULES / SAFEGUARDS:
+1. Cite current recommendations (2020-2024 research) when relevant.  
+2. Keep answers concise (≤ 300 words) with bullet-points when possible.  
+3. If uncertain, say so and suggest consulting a registered dietitian.  
+4. Always include a short disclaimer: “This is general educational advice…”  
+5. No medical diagnosis or treatment.  
+`;
+  };
+
+  /* ------------ API Call ------------ */
+  const callOpenAI = async (
+    chatHistory: ChatMessage[]
+  ): Promise<string | null> => {
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', // cheaper; change to 'gpt-4o' if desired
+          messages: chatHistory,
+          temperature: 0.7,
+          max_tokens: 600
+        })
+      });
+      if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || null;
+    } catch (err) {
+      console.error(err);
+      return null;
     }
-  }, [messages]);
+  };
 
-  const handleSendMessage = (e: FormEvent) => {
-    e.preventDefault();
-    if (!inputText.trim()) return;
+  /* ------------ Send message ------------ */
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || !apiKey) return;
+    setIsLoading(true);
 
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      text: inputText,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMessage]);
-    
-    // Generate AI response
-    setTimeout(() => {
-      const response = generateResponse(inputText);
-      const coachMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'coach',
-        text: response,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, coachMessage]);
-    }, 500);
-    
+    const newMessages = [
+      ...messages,
+      { role: 'user', content: text } as ChatMessage
+    ];
+    setMessages(newMessages);
     setInputText('');
+
+    const systemPrompt: ChatMessage = { role: 'system', content: buildSystemPrompt() };
+    const reply = await callOpenAI([systemPrompt, ...newMessages]);
+
+    if (reply) {
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } else {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            '❗ Sorry, there was a problem retrieving a response. Please check your API key or try again later.'
+        }
+      ]);
+    }
+    setIsLoading(false);
   };
 
-  const handleQuickQuestion = (question: string) => {
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      text: question,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMessage]);
-    
-    // Generate AI response
-    setTimeout(() => {
-      const response = generateResponse(question);
-      const coachMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'coach',
-        text: response,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, coachMessage]);
-    }, 500);
+  /* ------------ UI helpers ------------ */
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
   };
 
-  const generateResponse = (question: string): string => {
-    // Personalized responses based on assessment data
-    const targetCarbRate = assessment ? 
-      (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1) : '60';
-    const giSensitivity = assessment ? assessment.giSensitivity : 'moderate';
-    const sport = assessment ? assessment.sport : 'endurance sports';
-    const avgSymptoms = sessions.length > 0 ? 
-      (sessions.reduce((sum: number, s: any) => sum + s.symptomSeverity, 0) / sessions.length).toFixed(1) : 'unknown';
-    
-    // Normalize question for matching
-    const normalizedQuestion = question.toLowerCase();
-    
-    // Pre-race nutrition
-    if (normalizedQuestion.includes('before race') || normalizedQuestion.includes('pre-race') || normalizedQuestion.includes('before event')) {
-      if (giSensitivity === 'high') {
-        return `Based on your high GI sensitivity, I recommend a light meal 3-4 hours before your race with about 1-2g of carbs per kg of body weight. Stick to easily digestible options like white rice, toast with honey, or a low-fiber cereal. Avoid high-fiber, high-fat, and high-protein foods. In the final hour, you might try 30-40g of liquid carbs if you've tested this in training.`;
-      } else {
-        return `For pre-race nutrition, aim for 2-4g of carbs per kg of body weight in a meal 3-4 hours before your event. For ${sport}, good options include oatmeal with banana and honey, toast with jam, or a bagel with light toppings. In the 30-60 minutes before, you can top up with 30-60g of quick-release carbs like a sports drink or gel if you've practiced this in training.`;
+  /* ------------ Rendering ------------ */
       }
     }
-    
-    // Stomach issues
-    if (normalizedQuestion.includes('stomach') || normalizedQuestion.includes('gi issues') || normalizedQuestion.includes('gut problems')) {
-      if (avgSymptoms && Number(avgSymptoms) > 5) {
-        return `I see you've been experiencing significant gut symptoms (${avgSymptoms}/10 on average). To reduce these issues: 1) Start with liquid carbs like sports drinks, 2) Try multiple transportable carbs (glucose + fructose) in a 2:1 ratio, 3) Practice your race nutrition in training to adapt your gut, 4) Consider reducing fiber intake 24-48 hours before big sessions, 5) Try smaller, more frequent intake rather than large amounts at once. If symptoms persist, consider consulting with a sports dietitian.`;
-      } else {
-        return `For gut issues during exercise: 1) Train your gut by gradually increasing carb intake during training, 2) Start with easily digestible carbs like maltodextrin-based products, 3) Stay well hydrated, 4) Avoid high-fiber foods before exercise, 5) Try different carb sources to find what works for you, 6) Consider multiple transportable carbs (glucose + fructose) for better absorption, 7) Practice your race nutrition strategy in training.`;
-      }
-    }
-    
-    // Carb sources
-    if (normalizedQuestion.includes('carb sources') || normalizedQuestion.includes('best carbs') || normalizedQuestion.includes('what carbs')) {
-      if (giSensitivity === 'high') {
-        return `With your high GI sensitivity, focus on easily digestible carb sources: 1) Sports drinks with glucose/maltodextrin, 2) Isotonic gels (easier on the stomach), 3) White rice cakes, 4) Low-fiber energy bars, 5) Ripe bananas. Start with small amounts and gradually increase. Your target is ${targetCarbRate}g/hr, but build up to this gradually in training.`;
-      } else {
-        return `For ${sport}, especially during longer events, good carb sources include: 1) Sports drinks (60-80g carbs/liter), 2) Energy gels (20-30g carbs each), 3) Energy bars (25-40g carbs), 4) Bananas (~25g carbs), 5) Rice cakes, 6) Dates or dried fruit, 7) Honey sandwiches. For optimal absorption at your target rate of ${targetCarbRate}g/hr, consider using multiple transportable carbs (glucose + fructose) in a 2:1 ratio.`;
-      }
-    }
+      {/* API-Key Config */}
+      {!apiKey && (
+        <div className="card mb-6">
+          <h2 className="text-xl text-white mb-2">Enter your OpenAI API Key</h2>
+          <input
+            type="password"
+            placeholder="sk-..."
+            style={inputStyle}
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+          />
+          <button
+            className="btn-primary mt-4"
+            onClick={() => {
+              if (inputText.startsWith('sk-')) {
+                localStorage.setItem('openai-api-key', inputText);
+                setApiKey(inputText);
+                setInputText('');
+              } else alert('Please enter a valid key');
+            }}
+          >
+            Save Key
+          </button>
+        </div>
+      )}
+
+      {/* Header */}
     
     // Bonking
     if (normalizedQuestion.includes('bonk') || normalizedQuestion.includes('hitting the wall') || normalizedQuestion.includes('energy crash')) {
@@ -1718,10 +1765,16 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       {/* Quick Questions */}
       <div className="mb-6 flex flex-wrap gap-2">
-        {quickQuestions.map((question, index) => (
+        {[
+          'How much should I eat before my race?',
+          'Strategies to reduce GI distress?',
+          'Hydration targets for hot races?',
+          'Best carb sources for long rides?',
+          'When should I start fueling?'
+        ].map((question, index) => (
           <button
             key={index}
-            onClick={() => handleQuickQuestion(question)}
+            onClick={() => sendMessage(question)}
             className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full text-sm transition-colors"
           >
             {question}
@@ -1732,28 +1785,41 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       {/* Chat Container */}
       <div className="card mb-6 p-4 h-96 overflow-y-auto">
         <div className="space-y-4">
-          {messages.map(message => (
+          {messages.map((message, idx) => (
             <div 
-              key={message.id} 
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              key={idx} 
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
                 className={`max-w-3/4 rounded-2xl px-4 py-3 ${
-                  message.type === 'user' 
+                  message.role === 'user' 
                     ? 'bg-orange-500 text-white rounded-tr-none' 
                     : 'bg-slate-700 text-slate-200 rounded-tl-none'
                 }`}
               >
-                <p>{message.text}</p>
+                <p>{message.content}</p>
                 <p className={`text-xs mt-1 ${
                   message.type === 'user' ? 'text-orange-200' : 'text-slate-400'
                 }`}>
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-slate-700 text-slate-200 rounded-2xl px-4 py-3 animate-pulse">
+                Coach is typing…
+              </div>
+            </div>
+          )}
                   {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </p>
               </div>
             </div>
           ))}
-          <div ref={messagesEndRef} />
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          sendMessage(inputText);
+        }}
+        className="flex gap-2"
+      >
         </div>
       </div>
 
