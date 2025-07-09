@@ -907,20 +907,36 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
 
 // ============================================================================
 // SESSION LOGGER COMPONENT
-// ============================================================================
-const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Session, 'id'>) => void }> = ({ onBack, onSave }) => {
-  const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
     sport: 'Cycling',
-    duration: 90,
-    carbs: 60,
-    fluids: 750,
-    symptomSeverity: 0,
-    rpe: 5,
-    notes: ''
+  /* ------------------------------------------------------------------
+     Initialise form fields from assessment (if available) for better UX
+  ------------------------------------------------------------------ */
+  const firstTarget =
+    assessment && assessment.targetEvents && assessment.targetEvents.length > 0
+      ? assessment.targetEvents[0]
+      : '';
+
+  const [formData, setFormData] = useState({
+    raceName: firstTarget,
+    duration: assessment ? assessment.duration : 180, // minutes
+    aidInterval: 5, // km
+    intensity: assessment ? (assessment.intensity as 'low' | 'moderate' | 'high') : 'moderate'
+  });
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+
+  /* ensure state updates if assessment changes (e.g., after new assessment) */
+  useEffect(() => {
+    if (!assessment) return;
+    setFormData(prev => ({
+      ...prev,
+      raceName: firstTarget,
+      duration: assessment.duration,
+      intensity: assessment.intensity as 'low' | 'moderate' | 'high'
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -1235,7 +1251,9 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     raceName: '',
     duration: 180, // minutes
     aidInterval: 5, // km
-    intensity: assessment ? assessment.intensity : 'moderate'
+    intensity: assessment ? assessment.intensity : 'moderate',
+    temperature: 'normal',      // 'cold' | 'normal' | 'hot'
+    humidity: 'normal'          // 'normal' | 'high'
   });
   const [plan, setPlan] = useState<RacePlanBlock[] | null>(null);
   const [saved, setSaved] = useState(false);
@@ -1268,6 +1286,25 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleGenerate = (e: FormEvent) => {
     e.preventDefault();
     const blocks: RacePlanBlock[] = [];
+
+    /* -----------------------------------------
+       Calculate hourly carb requirement on the fly
+    ----------------------------------------- */
+    let baseRate = 60;
+    if (formData.intensity === 'high') baseRate = 75;
+    else if (formData.intensity === 'low') baseRate = 40;
+
+    let durationFactor = 1.0;
+    if (formData.duration >= 150) durationFactor = 1.1; // 10 % bump
+
+    const hourlyCarbs = baseRate * durationFactor;
+
+    /* ---------------- Fluid calculation ---------------- */
+    let fluidsPerHour = 650; // default for normal
+    if (formData.temperature === 'cold') fluidsPerHour = 450;
+    if (formData.temperature === 'hot')  fluidsPerHour = 900;
+    if (formData.humidity === 'high')    fluidsPerHour += 150;
+
     /* -----------------------------------------------------------
        Create plan blocks every 60 minutes instead of every 20 min
        ----------------------------------------------------------- */
@@ -1281,9 +1318,9 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       blocks.push({
         time: timeLabel,
         /* full hourly carb target */
-        carbs: `${targetRate.toFixed(0)} g`,
+        carbs: `${hourlyCarbs.toFixed(0)} g`,
         /* ~650 ml fluids per hour (mid-point of 600-750 ml) */
-        fluids: `650 ml`
+        fluids: `${fluidsPerHour} ml`
       });
     }
     setPlan(blocks);
@@ -1364,6 +1401,31 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <select name="intensity" value={formData.intensity} onChange={handleChange} style={inputStyle}>
                 <option value="low">Low</option>
                 <option value="moderate">Moderate</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Expected Temperature</label>
+              <select
+                name="temperature"
+                value={formData.temperature}
+                onChange={handleChange}
+                style={inputStyle}
+              >
+                <option value="cold">Cold (&lt;10 °C)</option>
+                <option value="normal">Normal (10 – 25 °C)</option>
+                <option value="hot">Hot (&gt;25 °C)</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Humidity Level</label>
+              <select
+                name="humidity"
+                value={formData.humidity}
+                onChange={handleChange}
+                style={inputStyle}
+              >
+                <option value="normal">Normal</option>
                 <option value="high">High</option>
               </select>
             </div>
