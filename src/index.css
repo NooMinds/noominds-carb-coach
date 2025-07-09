@@ -249,6 +249,14 @@ input[type="range"]::-moz-range-thumb {
   margin-top: 1rem;
 }
 
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.mt-8 {
+  margin-top: 2rem;
+}
+
 .mr-3, .mr-4 {
   margin-right: 1rem;
 }
