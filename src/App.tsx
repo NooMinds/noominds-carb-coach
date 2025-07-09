@@ -43,6 +43,9 @@ interface AssessmentResult {
   sport: string;
   experienceLevel: string;
   targetEvents: string[];
+  eventDate: string;
+  duration: number;
+  intensity: string;
 }
 
 // ============================================================================
@@ -173,6 +176,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     sport: 'Triathlon',
     experienceLevel: 'Intermediate',
     targetEvents: '',
+    eventDate: new Date().toISOString().split('T')[0],
     
     // Exercise Details
     duration: 120,
@@ -277,7 +281,10 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
         gender: formData.gender,
         sport: formData.sport,
         experienceLevel: formData.experienceLevel,
-        targetEvents: targetEventsArray
+        targetEvents: targetEventsArray,
+        eventDate: formData.eventDate,
+        duration: formData.duration,
+        intensity: formData.intensity
       };
       localStorage.setItem('noominds-assessment', JSON.stringify(assessmentResult));
       
@@ -431,6 +438,17 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
                   <option value="Advanced">Advanced</option>
                   <option value="Elite">Elite</option>
                 </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Event Date</label>
+                <input 
+                  type="date" 
+                  name="eventDate" 
+                  value={formData.eventDate} 
+                  onChange={handleInputChange} 
+                  style={inputStyle}
+                  required
+                />
               </div>
               <div className="md:col-span-2">
                 <label style={labelStyle}>Target Events (comma separated)</label>
@@ -704,6 +722,12 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
 
   const metrics = calculateMetrics();
 
+  // Calculate target carb rate from assessment
+  const getTargetCarbRate = () => {
+    if (!assessmentResult) return '0.0';
+    return (assessmentResult.targetCarbs / (assessmentResult.duration / 60)).toFixed(1);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -726,7 +750,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       {/* Event Readiness */}
       <div className="card mb-8">
         <h2 className="text-2xl font-bold text-white mb-6">Event Readiness</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <div className="bg-slate-800/50 rounded-xl p-5">
             <h3 className="text-slate-400 mb-2">Status</h3>
             <div className={`text-2xl font-bold ${
@@ -736,6 +760,10 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
             }`}>
               {metrics.eventReadiness}
             </div>
+          </div>
+          <div className="bg-slate-800/50 rounded-xl p-5">
+            <h3 className="text-slate-400 mb-2">Target Carb Rate</h3>
+            <div className="text-2xl font-bold text-orange-400">{getTargetCarbRate()} <span className="text-sm">g/hr</span></div>
           </div>
           <div className="bg-slate-800/50 rounded-xl p-5">
             <h3 className="text-slate-400 mb-2">Avg Carb Rate</h3>
@@ -822,7 +850,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           
           <div className="mt-4 flex justify-between items-center">
             <span className="text-sm text-slate-500">
-              {client.targetEvents.length > 0 ? `${client.targetEvents.length} events` : 'No events planned'}
+              {assessmentResult && assessmentResult.eventDate ? `Event: ${formatDate(assessmentResult.eventDate)}` : 'No events planned'}
             </span>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-orange-500">
               <path d="M5 12h14"></path>
