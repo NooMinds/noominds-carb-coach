@@ -321,6 +321,15 @@ input[type="range"]::-moz-range-thumb {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
+/* newly added generic grid column helpers */
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .gap-4, .gap-6, .gap-8 {
   gap: 1rem;
 }
@@ -438,6 +447,11 @@ input[type="range"]::-moz-range-thumb {
 @media (min-width: 768px) {
   .md\:grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  
+  /* added medium-screen 3-column helper */
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   
   .md\:grid-cols-4 {
