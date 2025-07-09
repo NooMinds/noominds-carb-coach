@@ -742,6 +742,36 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
   };
 
   /* ------------------------------------------------------------------
+     Build tooltip explaining the readiness status logic
+  ------------------------------------------------------------------ */
+  const targetRateNum =
+    assessmentResult ? assessmentResult.targetCarbs / (assessmentResult.duration / 60) : 0;
+  const avgCarbsNum = Number(metrics.avgCarbs);
+  const carbGap = Math.abs(targetRateNum - avgCarbsNum);
+  const avgSymptomsNum = Number(metrics.avgSymptoms);
+
+  let statusTooltip = 'Complete assessment to set carb targets';
+  if (assessmentResult) {
+    if (avgSymptomsNum > 5) {
+      statusTooltip = `Average symptoms ${avgSymptomsNum}/10 exceed threshold (5)`;
+    } else if (sessions.length < 3) {
+      statusTooltip = `Need more training sessions (have ${sessions.length}, need 3+)`;
+    } else if (carbGap > 25) {
+      statusTooltip = `Target: ${targetRateNum.toFixed(1)}g/hr, Actual: ${avgCarbsNum.toFixed(
+        1
+      )}g/hr, Gap: ${carbGap.toFixed(1)}g/hr exceeds 25g/hr threshold`;
+    } else if (carbGap > 15) {
+      statusTooltip = `Target: ${targetRateNum.toFixed(1)}g/hr, Actual: ${avgCarbsNum.toFixed(
+        1
+      )}g/hr, Gap: ${carbGap.toFixed(1)}g/hr exceeds 15g/hr threshold`;
+    } else {
+      statusTooltip = `Target: ${targetRateNum.toFixed(1)}g/hr, Actual: ${avgCarbsNum.toFixed(
+        1
+      )}g/hr, Gap: ${carbGap.toFixed(1)}g/hr within acceptable range`;
+    }
+  }
+
+  /* ------------------------------------------------------------------
      DISPLAY INFO: Prefer real assessment data over mock client
   ------------------------------------------------------------------ */
   const displayName = assessmentResult?.name || client.name;
@@ -792,7 +822,10 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
         <div className="space-y-6">
           {/* First row: 3 metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-800/50 rounded-xl p-5">
+            <div
+              className="bg-slate-800/50 rounded-xl p-5"
+              title={statusTooltip}
+            >
               <h3 className="text-slate-400 mb-2">Status</h3>
               <div className={`text-2xl font-bold ${
                 metrics.eventReadiness === 'Ready' ? 'text-green-400' :
