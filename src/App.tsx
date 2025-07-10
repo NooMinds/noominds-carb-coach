@@ -4,33 +4,42 @@ import './App.css';
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
+// Basic user profile
+interface Client {
+  name: string;
+  email: string;
   age: number;
-  weight: number;
-  height: number;
+  weight: number;      // kg
+  height: number;      // cm
   gender: string;
-  sport: string;
+  sport: string;       // primary sport
   experienceLevel: string;
-  sport: string;
-  duration: number;
-  carbs: number;
   targetEvents: string[];
 }
 
+// Individual training session
 interface Session {
   id: string;
-  date: string;
+  date: string;                // ISO string
   sport: string;
-  duration: number;
-  carbs: number;
-  fluids: number;
-  symptomSeverity: number;
-  rpe: number;
+  duration: number;            // minutes
+  carbs: number;               // grams (total)
+  fluids: number;              // millilitres (total)
+  symptomSeverity: number;     // 0-10 scale
+  rpe: number;                 // 1-10 scale
   notes: string;
 }
 
+// Saved assessment output (used across components)
 interface AssessmentResult {
+  /* Calculated results */
+  targetCarbs: number;         // grams (total session)
+  giSensitivity: string;       // none | moderate | high
+  recommendations: string[];
+
+  /* Raw questionnaire data */
   symptoms: string[];
-  date: string;
+  date: string;                // ISO timestamp
   name: string;
   email: string;
   age: number;
@@ -41,8 +50,8 @@ interface AssessmentResult {
   experienceLevel: string;
   targetEvents: string[];
   eventDate: string;
-  duration: number;
-  intensity: string;
+  duration: number;            // minutes
+  intensity: string;           // low | moderate | high
 }
 
 // ============================================================================
