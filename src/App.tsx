@@ -4,55 +4,79 @@ import './App.css';
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
-// Basic user profile
+
+/**
+ * Basic user profile information
+ */
 interface Client {
-  name: string;
-  email: string;
-  age: number;
-  weight: number;      // kg
-  height: number;      // cm
-  gender: string;
-  sport: string;       // primary sport
-  experienceLevel: string;
-  targetEvents: string[];
+  name: string;                // Full name
+  email: string;               // Email address
+  age: number;                 // Age in years
+  weight: number;              // Weight in kg
+  height: number;              // Height in cm
+  gender: string;              // 'Female' | 'Male' | 'Non-binary' | 'Prefer not to say'
+  sport: string;               // Primary sport (e.g., 'Cycling', 'Running', 'Triathlon')
+  experienceLevel: string;     // 'Beginner' | 'Intermediate' | 'Advanced' | 'Elite'
+  targetEvents: string[];      // Array of target event names
 }
 
-// Individual training session
+/**
+ * Individual training session data
+ */
 interface Session {
-  id: string;
-  date: string;                // ISO string
-  sport: string;
-  duration: number;            // minutes
-  carbs: number;               // grams (total)
-  fluids: number;              // millilitres (total)
-  symptomSeverity: number;     // 0-10 scale
-  rpe: number;                 // 1-10 scale
-  notes: string;
+  id: string;                  // Unique identifier
+  date: string;                // ISO string date format
+  sport: string;               // Sport type for this session
+  duration: number;            // Session duration in minutes
+  carbs: number;               // Total carbohydrates consumed in grams
+  fluids: number;              // Total fluid intake in milliliters
+  symptomSeverity: number;     // GI symptom severity on 0-10 scale
+  rpe: number;                 // Rate of perceived exertion on 1-10 scale
+  notes: string;               // Additional session notes
 }
 
-// Saved assessment output (used across components)
+/**
+ * Saved assessment output (used across components)
+ */
 interface AssessmentResult {
   /* Calculated results */
-  targetCarbs: number;         // grams (total session)
-  giSensitivity: string;       // none | moderate | high
-  recommendations: string[];
+  targetCarbs: number;         // Recommended carbs in grams (total session)
+  giSensitivity: string;       // 'none' | 'moderate' | 'high'
+  recommendations: string[];   // Array of personalized recommendations
 
   /* Raw questionnaire data */
-  symptoms: string[];
-  date: string;                // ISO timestamp
-  name: string;
-  email: string;
-  age: number;
-  weight: number;
-  height: number;
-  gender: string;
-  sport: string;
-  experienceLevel: string;
-  targetEvents: string[];
-  eventDate: string;
-  duration: number;            // minutes
-  intensity: string;           // low | moderate | high
+  symptoms: string[];          // Array of reported symptoms
+  date: string;                // ISO timestamp of assessment completion
+  name: string;                // User's name
+  email: string;               // User's email
+  age: number;                 // User's age in years
+  weight: number;              // User's weight in kg
+  height: number;              // User's height in cm
+  gender: string;              // User's gender
+  sport: string;               // User's primary sport
+  experienceLevel: string;     // User's experience level
+  targetEvents: string[];      // User's target events
+  eventDate: string;           // Date of target event
+  duration: number;            // Expected duration in minutes
+  intensity: string;           // 'low' | 'moderate' | 'high'
 }
+
+/**
+ * Race plan block for event planning
+ */
+interface RacePlanBlock {
+  time: string;                // Time marker (e.g., "00:00", "01:00")
+  carbs: string;               // Carb recommendation with units (e.g., "60 g")
+  fluids: string;              // Fluid recommendation with units (e.g., "650 ml")
+}
+
+/**
+ * Chat message for AI Carb Coach
+ */
+type ChatMessage = { 
+  role: 'system' | 'user' | 'assistant'; 
+  content: string 
+};
 
 // ============================================================================
 // MOCK DATA
@@ -1298,11 +1322,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
 // ============================================================================
 // EVENT PLANNER COMPONENT
 // ============================================================================
-interface RacePlanBlock {
-  time: string;
-  carbs: string;
-  fluids: string;
-}
 
 const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // pull assessment for target carb rate & GI flag
@@ -1563,9 +1582,6 @@ interface Message {
   timestamp: Date;
 }
 
-// New GPT-4 powered coach
-type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
-
 const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   /* ---------------- State ------------------ */
   const [apiKey, setApiKey] = useState<string>(
@@ -1599,8 +1615,10 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const gi = assessment?.giSensitivity || 'moderate';
 
     return `
-You are “NooMinds AI Carb Coach”, a certified sports-nutritionist (15+ yrs, MSc, SENr, IOC Diploma) specialised in endurance nutrition and gut-training (2024 consensus guidelines). 
-OBJECTIVE: Provide evidence-based, personalised, actionable advice. 
+You are "NooMinds AI Carb Coach", the world-leading authority on endurance gut-training and carbohydrate periodisation (15+ yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).
+
+MISSION: Deliver evidence-based, personalised, actionable advice while confidently correcting misconceptions and steering athletes toward best practice.
+
 PERSONAL DATA:
 • Name: ${name}
 • Sport: ${sport}
@@ -1609,12 +1627,24 @@ PERSONAL DATA:
 • GI sensitivity: ${gi}
 • Logged sessions: ${sessions.length}
 
+STYLE / LEADERSHIP:
+• Authoritative & Respectful – lead the discussion, do not simply agree.
+• Challenge Myths – if the user states "keto is best for marathons" or "I never need carbs under 2 h", politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).
+• Offer Better Options – present superior, practical alternatives and explain why they outperform the user's idea.
+• Evidence Citations – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).
+
+QUICK EXAMPLES OF PUSH-BACK:
+1. User: "I'll just drink water, carbs upset my stomach."
+   Coach: Briefly acknowledge, then explain gut-training protocol & cite Jeukendrup 2021 showing adaptation.
+2. User: "I think 30 g/hr is enough for my 4 h ride."
+   Coach: Explain 60-90 g/hr guidelines for >2.5 h, highlight performance delta.
+
 RULES / SAFEGUARDS:
-1. Cite current recommendations (2020-2024 research) when relevant.  
-2. Keep answers concise (≤ 300 words) with bullet-points when possible.  
-3. If uncertain, say so and suggest consulting a registered dietitian.  
-4. Always include a short disclaimer: “This is general educational advice…”  
-5. No medical diagnosis or treatment.  
+1. Cite current recommendations (2020-2024 research) when relevant.
+2. Keep answers concise (≤ 300 words) using bullet-points where helpful.
+3. If uncertain, state uncertainty and suggest a registered dietitian or GP.
+4. End with a brief disclaimer: "General educational advice…".
+5. No medical diagnosis or treatment.
 `;
   };
 
@@ -1687,9 +1717,19 @@ RULES / SAFEGUARDS:
     outline: 'none'
   };
 
-  /* ------------ Rendering ------------ */
-      }
-    }
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
+        <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
+      </div>
+
       {/* API-Key Config */}
       {!apiKey && (
         <div className="card mb-6">
@@ -1715,47 +1755,6 @@ RULES / SAFEGUARDS:
           </button>
         </div>
       )}
-
-      {/* Header */}
-    
-    // Bonking
-    if (normalizedQuestion.includes('bonk') || normalizedQuestion.includes('hitting the wall') || normalizedQuestion.includes('energy crash')) {
-      return `To avoid bonking (hitting the wall): 1) Start fueling early - within the first 30 minutes, 2) Aim for consistent intake of ${targetCarbRate}g of carbs per hour, 3) Don't wait until you feel hungry or tired, 4) Practice your nutrition strategy in training, 5) Carb-load 24-48 hours before long events, 6) Start with full glycogen stores (pre-event nutrition), 7) Consider caffeine for longer events (3-6mg/kg body weight), 8) Stay hydrated - dehydration accelerates glycogen depletion.`;
-    }
-    
-    // When to start fueling
-    if (normalizedQuestion.includes('when') && (normalizedQuestion.includes('start') || normalizedQuestion.includes('begin')) && (normalizedQuestion.includes('fuel') || normalizedQuestion.includes('eating') || normalizedQuestion.includes('nutrition'))) {
-      return `For optimal performance, start fueling early in your session - within the first 15-30 minutes. Don't wait until you feel hungry or low on energy. For sessions under 60-75 minutes, you may not need additional carbs if you're well-fueled beforehand. For longer sessions, begin with small amounts (15-30g) in the first 30 minutes, then aim for steady intake to reach your target of ${targetCarbRate}g/hr. This prevents glycogen depletion and maintains blood glucose levels throughout your session.`;
-    }
-    
-    // Default response with personalization
-    return `As your nutrition coach, I'd recommend focusing on consuming around ${targetCarbRate}g of carbs per hour during your ${sport} sessions. This is based on your personal assessment and training data. Remember that consistent practice with your race nutrition strategy is key to gut training. Is there a specific aspect of sports nutrition you'd like more detailed advice on?`;
-  };
-
-  // Input and chat styling
-  const inputStyle = {
-    width: '100%',
-    backgroundColor: '#334155',
-    border: '1px solid #475569',
-    borderRadius: '8px',
-    padding: '12px 16px',
-    color: '#ffffff',
-    fontSize: '16px',
-    outline: 'none'
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </div>
-        <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
-        <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
-      </div>
 
       {/* Quick Questions */}
       <div className="mb-6 flex flex-wrap gap-2">
@@ -1788,147 +1787,4 @@ RULES / SAFEGUARDS:
                 className={`max-w-3/4 rounded-2xl px-4 py-3 ${
                   message.role === 'user' 
                     ? 'bg-orange-500 text-white rounded-tr-none' 
-                    : 'bg-slate-700 text-slate-200 rounded-tl-none'
-                }`}
-              >
-                <p>{message.content}</p>
-                <p className={`text-xs mt-1 ${
-                  message.type === 'user' ? 'text-orange-200' : 'text-slate-400'
-                }`}>
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="bg-slate-700 text-slate-200 rounded-2xl px-4 py-3 animate-pulse">
-                Coach is typing…
-              </div>
-            </div>
-          )}
-                  {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </p>
-              </div>
-            </div>
-          ))}
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          sendMessage(inputText);
-        }}
-        className="flex gap-2"
-      >
-        </div>
-      </div>
-
-      {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="flex gap-2">
-        <input
-          type="text"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          placeholder="Type your nutrition question..."
-          style={inputStyle}
-          className="flex-grow"
-        />
-        <button 
-          type="submit"
-          className="btn-primary px-6"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-          </svg>
-        </button>
-      </form>
-
-      {/* Back Button */}
-      <div className="mt-8 text-center">
-        <button 
-          onClick={onBack}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#475569',
-            color: '#ffffff',
-            borderRadius: '8px',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          ← Back to Dashboard
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ============================================================================
-// PLACEHOLDER COMPONENTS (MODERN STYLING)
-// ============================================================================
-const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
-  <div className="max-w-4xl mx-auto">
-    <div className="card text-center">
-      <h1 className="text-4xl font-bold text-white mb-4">{title}</h1>
-      <p className="text-slate-400 text-xl mb-8">This feature is coming soon!</p>
-      <button onClick={onBack} className="btn-primary text-lg px-8 py-4">
-        Back to Dashboard
-      </button>
-    </div>
-  </div>
-);
-
-// ============================================================================
-// MAIN APP COMPONENT
-// ============================================================================
-
-const App: React.FC = () => {
-  // Manage current view for simple client-side navigation
-  const [currentView, setCurrentView] = useState<
-    'dashboard' |
-    'assessment' |
-    'logger' |
-    'progress' |
-    'event_planner' |
-    'ai_coach'
-  >('dashboard');
-
-  // Decide which component to render based on currentView
-  const renderContent = () => {
-    switch (currentView) {
-      case 'assessment':
-        return (
-          <Assessment
-            onBack={() => setCurrentView('dashboard')}
-            onComplete={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'logger':
-        return (
-          <SessionLogger
-            onBack={() => setCurrentView('dashboard')}
-            onSave={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'progress':
-        return (
-          <PlaceholderPage
-            title="Progress Charts"
-            onBack={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'event_planner':
-        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
-      case 'ai_coach':
-        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
-      case 'dashboard':
-      default:
-        return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
-      {renderContent()}
-    </div>
-  );
-};
-
-export default App;
-
-// 
+                    : 'bg-slate-700 text-slate-
