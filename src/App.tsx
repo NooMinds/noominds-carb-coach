@@ -1744,3 +1744,4 @@ function AICarbCoach({ onBack }) {
     </div>
   );
 }
+export default App;
