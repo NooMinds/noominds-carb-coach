@@ -1,4 +1,5 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
+
 import './App.css';
 
 // ============================================================================
@@ -43,7 +44,6 @@ interface AssessmentResult {
   targetCarbs: number;         // Recommended carbs in grams (total session)
   giSensitivity: string;       // 'none' | 'moderate' | 'high'
   recommendations: string[];   // Array of personalized recommendations
-
   /* Raw questionnaire data */
   symptoms: string[];          // Array of reported symptoms
   date: string;                // ISO timestamp of assessment completion
@@ -81,6 +81,7 @@ type ChatMessage = {
 // ============================================================================
 // MOCK DATA
 // ============================================================================
+
 const mockClient: Client = {
   name: 'Sarah Johnson',
   email: 'sarah.j@example.com',
@@ -96,6 +97,7 @@ const mockClient: Client = {
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
+
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -104,6 +106,7 @@ function formatDate(dateString: string): string {
 // ============================================================================
 // CARB CALCULATION FUNCTIONS
 // ============================================================================
+
 function calculateTargetCarbs(
   weight: number,
   duration: number,
@@ -127,12 +130,10 @@ function calculateTargetCarbs(
   if (duration >= 150) { // 2.5+ hours
     durationFactor = 1.1; // 10% increase for longer events
   }
-
   /* ------------------------------------------------------------------
      GI sensitivity should NOT reduce the physiological carb requirement.
      It will be used purely for visual / tracking purposes elsewhere.
      ------------------------------------------------------------------ */
-
   // Calculate target carbs per hour (no GI penalty)
   const targetCarbsPerHour = baseRate * durationFactor;
   
@@ -192,6 +193,7 @@ function generateRecommendations(
 // ============================================================================
 // ASSESSMENT COMPONENT
 // ============================================================================
+
 const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ onBack, onComplete }) => {
   const [formData, setFormData] = useState({
     // Personal Details
@@ -216,11 +218,9 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     giHistory: 'none',
     symptoms: [] as string[],
   });
-
   const [showResults, setShowResults] = useState(false);
   const [targetCarbs, setTargetCarbs] = useState(0);
   const [recommendations, setRecommendations] = useState<string[]>([]);
-
   // Input styling for white text on dark background
   const inputStyle = {
     width: '100%',
@@ -232,14 +232,12 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     fontSize: '16px',
     outline: 'none'
   };
-
   const labelStyle = {
     color: '#ffffff',
     fontWeight: '500',
     marginBottom: '8px',
     display: 'block'
   };
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
@@ -263,7 +261,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
       }));
     }
   };
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -327,7 +324,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
       alert('There was an error calculating your carb needs. Please try again.');
     }
   };
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -340,7 +336,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
         <h1 className="text-4xl font-bold text-white mb-4">Carb Needs Assessment</h1>
         <p className="text-xl text-slate-300">Calculate your personalized carbohydrate requirements</p>
       </div>
-
       {!showResults ? (
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Personal Details */}
@@ -429,7 +424,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
-
           {/* Sport & Experience */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -493,7 +487,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
-
           {/* Exercise Details */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -531,7 +524,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
-
           {/* GI History */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -553,7 +545,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
                 <option value="high">High (Frequent GI issues)</option>
               </select>
             </div>
-
             {formData.giHistory !== 'none' && (
               <div className="mt-6">
                 <label style={labelStyle}>Common Symptoms (Select all that apply)</label>
@@ -576,7 +567,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             )}
           </div>
-
           {/* Action Buttons */}
           <div className="flex justify-between items-center pt-8">
             <button 
@@ -628,7 +618,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               <p className="text-slate-400">Recommended hourly intake</p>
             </div>
           </div>
-
           {/* Recommendations */}
           <div className="card">
             <h2 className="text-2xl font-bold text-white mb-6">Personalized Recommendations</h2>
@@ -645,7 +634,6 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               ))}
             </ul>
           </div>
-
           {/* Action Buttons */}
           <div className="flex justify-between items-center pt-4">
             <button 
@@ -677,10 +665,10 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
 // ============================================================================
 // DASHBOARD COMPONENT
 // ============================================================================
+
 const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }> = ({ client, onNavigate }) => {
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
-
   // Load assessment and sessions from localStorage
   useEffect(() => {
     const savedAssessment = localStorage.getItem('noominds-assessment');
@@ -693,7 +681,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       setSessions(JSON.parse(savedSessions));
     }
   }, []);
-
   // Calculate metrics
   const calculateMetrics = () => {
     // Default values
@@ -701,7 +688,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     let avgCarbs = 0;
     let avgSymptoms = 0;
     let consistency = 0;
-
     if (sessions.length > 0) {
       /* ---------- Average carbohydrate intake (g/hr) ---------- */
       avgCarbs =
@@ -709,7 +695,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           (sum, session) => sum + session.carbs / (session.duration / 60),
           0
         ) / sessions.length;
-
       /* ---------- Average symptom severity (0–10) ------------- */
       avgSymptoms =
         sessions.reduce(
@@ -718,11 +703,9 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
         ) / sessions.length;
       // Clamp between 0 and 10
       avgSymptoms = Math.max(0, Math.min(10, avgSymptoms));
-
       /* ---------- Consistency: unique training days in last 7 d */
       const last7Days = new Date();
       last7Days.setDate(last7Days.getDate() - 7);
-
       const recentSessions = sessions.filter(
         session => new Date(session.date) >= last7Days
       );
@@ -732,7 +715,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       );
       consistency = Math.min(100, (uniqueDays.size / 7) * 100); // Cap at 100%
     }
-
     /* ---------- Event readiness status rules ------------------ */
     if (!assessmentResult) {
       eventReadiness = 'Not Ready';
@@ -741,7 +723,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       const targetCarbRate =
         assessmentResult.targetCarbs / (assessmentResult.duration / 60);
       const carbGap = Math.abs(targetCarbRate - avgCarbs);
-
       if (avgSymptoms > 5) {
         eventReadiness = 'Caution'; // high symptom burden
       } else if (sessions.length < 3) {
@@ -754,7 +735,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
         eventReadiness = 'Ready'; // within acceptable range
       }
     }
-
     return {
       eventReadiness,
       avgCarbs: avgCarbs.toFixed(1),
@@ -762,15 +742,12 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       consistency: Math.round(consistency),
     };
   };
-
   const metrics = calculateMetrics();
-
   // Calculate target carb rate from assessment
   const getTargetCarbRate = () => {
     if (!assessmentResult) return '0.0';
     return (assessmentResult.targetCarbs / (assessmentResult.duration / 60)).toFixed(1);
   };
-
   /* ------------------------------------------------------------------
      Build tooltip explaining the readiness status logic
   ------------------------------------------------------------------ */
@@ -779,7 +756,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
   const avgCarbsNum = Number(metrics.avgCarbs);
   const carbGap = Math.abs(targetRateNum - avgCarbsNum);
   const avgSymptomsNum = Number(metrics.avgSymptoms);
-
   let statusTooltip = 'Complete assessment to set carb targets';
   if (assessmentResult) {
     if (avgSymptomsNum > 5) {
@@ -800,14 +776,12 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       )}g/hr, Gap: ${carbGap.toFixed(1)}g/hr within acceptable range`;
     }
   }
-
   /* ------------------------------------------------------------------
      DISPLAY INFO: Prefer real assessment data over mock client
   ------------------------------------------------------------------ */
   const displayName = assessmentResult?.name || client.name;
   const displaySport = assessmentResult?.sport || client.sport;
   const displayExperience = assessmentResult?.experienceLevel || client.experienceLevel;
-
   /* ------------------------------------------------------------------
      RESET DATA: Clear all stored data and reset dashboard state
   ------------------------------------------------------------------ */
@@ -816,17 +790,14 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       '⚠️  This will permanently delete all saved assessments, sessions, and event plans. Are you sure you want to continue?'
     );
     if (!confirmReset) return;
-
     // Clear localStorage keys
     localStorage.removeItem('noominds-assessment');
     localStorage.removeItem('noominds-sessions');
     localStorage.removeItem('noominds-event-plans');
-
     // Reset component state
     setAssessmentResult(null);
     setSessions([]);
   };
-
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -845,7 +816,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           </div>
         </div>
       </div>
-
       {/* Event Readiness */}
       <div className="card mb-8">
         <h2 className="text-2xl font-bold text-white mb-6">Event Readiness</h2>
@@ -888,7 +858,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           </div>
         </div>
       </div>
-
       {/* Reset Data Button */}
       <div className="flex justify-end mb-10">
         <button
@@ -906,7 +875,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           🗑️ Reset All Data
         </button>
       </div>
-
       {/* Feature Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Assessment Tile */}
@@ -1015,6 +983,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
 // ============================================================================
 // SESSION LOGGER COMPONENT
 // ============================================================================
+
 const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Session, 'id'>) => void }> = ({ onBack, onSave }) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -1026,9 +995,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
     rpe: 5,
     notes: ''
   });
-
   const [showSuccess, setShowSuccess] = useState(false);
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -1036,7 +1003,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       [name]: type === 'number' ? Number(value) : value
     }));
   };
-
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -1044,11 +1010,9 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       ...formData,
       id: Date.now().toString()
     };
-
     const existingSessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
     existingSessions.push(newSession);
     localStorage.setItem('noominds-sessions', JSON.stringify(existingSessions));
-
     setShowSuccess(true);
     
     setFormData({
@@ -1061,12 +1025,10 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       rpe: 5,
       notes: ''
     });
-
     setTimeout(() => {
       setShowSuccess(false);
     }, 3000);
   };
-
   const inputStyle = {
     width: '100%',
     backgroundColor: '#334155',
@@ -1077,16 +1039,13 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
     fontSize: '16px',
     outline: 'none'
   };
-
   const labelStyle = {
     color: '#ffffff',
     fontWeight: '500',
     marginBottom: '8px',
     display: 'block'
   };
-
   const carbRate = formData.duration > 0 ? (formData.carbs / (formData.duration / 60)).toFixed(1) : 0;
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
@@ -1100,7 +1059,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
         <h1 className="text-4xl font-bold text-white mb-4">Log Training Session</h1>
         <p className="text-xl text-slate-300">Track your fueling and gut response during training</p>
       </div>
-
       {showSuccess && (
         <div className="card bg-green-500/10 border-2 border-green-500/30 mb-8">
           <div className="flex items-center">
@@ -1117,7 +1075,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
           </div>
         </div>
       )}
-
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="card">
           <div className="flex items-center mb-6">
@@ -1187,7 +1144,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1228,7 +1184,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1271,7 +1226,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
-
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1291,7 +1245,6 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             />
           </div>
         </div>
-
         <div className="flex justify-between items-center pt-8">
           <button 
             type="button"
@@ -1332,7 +1285,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     assessment && assessment.duration
       ? assessment.targetCarbs / (assessment.duration / 60)
       : 60; // sensible default
-
   const [formData, setFormData] = useState({
     raceName: '',
     duration: 180, // minutes
@@ -1343,7 +1295,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   });
   const [plan, setPlan] = useState<RacePlanBlock[] | null>(null);
   const [saved, setSaved] = useState(false);
-
   const inputStyle = {
     width: '100%',
     backgroundColor: '#334155',
@@ -1360,7 +1311,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     marginBottom: '8px',
     display: 'block'
   };
-
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -1368,29 +1318,23 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       [name]: type === 'number' ? Number(value) : value
     }));
   };
-
   const handleGenerate = (e: FormEvent) => {
     e.preventDefault();
     const blocks: RacePlanBlock[] = [];
-
     /* -----------------------------------------
        Calculate hourly carb requirement on the fly
     ----------------------------------------- */
     let baseRate = 60;
     if (formData.intensity === 'high') baseRate = 75;
     else if (formData.intensity === 'low') baseRate = 40;
-
     let durationFactor = 1.0;
     if (formData.duration >= 150) durationFactor = 1.1; // 10 % bump
-
     const hourlyCarbs = baseRate * durationFactor;
-
     /* ---------------- Fluid calculation ---------------- */
     let fluidsPerHour = 650; // default for normal
     if (formData.temperature === 'cold') fluidsPerHour = 450;
     if (formData.temperature === 'hot')  fluidsPerHour = 900;
     if (formData.humidity === 'high')    fluidsPerHour += 150;
-
     /* -----------------------------------------------------------
        Create plan blocks every 60 minutes instead of every 20 min
        ----------------------------------------------------------- */
@@ -1412,7 +1356,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setPlan(blocks);
     setSaved(false);
   };
-
   const handleSave = () => {
     if (!plan) return;
     const stored = JSON.parse(localStorage.getItem('noominds-event-plans') || '[]');
@@ -1424,7 +1367,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     localStorage.setItem('noominds-event-plans', JSON.stringify(stored));
     setSaved(true);
   };
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -1437,7 +1379,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <h1 className="text-4xl font-bold text-white mb-4">Event Planner</h1>
         <p className="text-xl text-slate-300">Build your race-day nutrition plan</p>
       </div>
-
       {/* Form */}
       <form onSubmit={handleGenerate} className="space-y-8">
         <div className="card">
@@ -1498,9 +1439,9 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="cold">Cold (&lt;10 °C)</option>
+                <option value="cold">Cold (<10 °C)</option>
                 <option value="normal">Normal (10 – 25 °C)</option>
-                <option value="hot">Hot (&gt;25 °C)</option>
+                <option value="hot">Hot (>25 °C)</option>
               </select>
             </div>
             <div>
@@ -1537,7 +1478,6 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </button>
         </div>
       </form>
-
       {/* Plan Preview */}
       {plan && (
         <div className="card mt-8">
@@ -1575,6 +1515,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // ============================================================================
 // AI CARB COACH COMPONENT
 // ============================================================================
+
 interface Message {
   id: string;
   type: 'user' | 'coach';
@@ -1596,7 +1537,6 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   /* ------------ Helpers ------------ */
   const assessment: AssessmentResult | null = JSON.parse(
     localStorage.getItem('noominds-assessment') || 'null'
@@ -1604,7 +1544,6 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const sessions: Session[] = JSON.parse(
     localStorage.getItem('noominds-sessions') || '[]'
   );
-
   const buildSystemPrompt = (): string => {
     const name = assessment?.name || 'Athlete';
     const sport = assessment?.sport || 'endurance sport';
@@ -1613,41 +1552,58 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       ? (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1)
       : '60';
     const gi = assessment?.giSensitivity || 'moderate';
-
     return `
 You are "NooMinds AI Carb Coach", the world-leading authority on endurance gut-training and carbohydrate periodisation (15+ yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).
 
 MISSION: Deliver evidence-based, personalised, actionable advice while confidently correcting misconceptions and steering athletes toward best practice.
 
 PERSONAL DATA:
-• Name: ${name}
-• Sport: ${sport}
-• Experience: ${exp}
-• Target carb rate: ${targetRate} g/hr
-• GI sensitivity: ${gi}
-• Logged sessions: ${sessions.length}
+
+- Name: ${name}
+
+- Sport: ${sport}
+
+- Experience: ${exp}
+
+- Target carb rate: ${targetRate} g/hr
+
+- GI sensitivity: ${gi}
+
+- Logged sessions: ${sessions.length}
 
 STYLE / LEADERSHIP:
-• Authoritative & Respectful – lead the discussion, do not simply agree.
-• Challenge Myths – if the user states "keto is best for marathons" or "I never need carbs under 2 h", politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).
-• Offer Better Options – present superior, practical alternatives and explain why they outperform the user's idea.
-• Evidence Citations – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).
+
+- Authoritative & Respectful – lead the discussion, do not simply agree.
+
+- Challenge Myths – if the user states "keto is best for marathons" or "I never need carbs under 2 h", politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).
+
+- Offer Better Options – present superior, practical alternatives and explain why they outperform the user's idea.
+
+- Evidence Citations – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).
 
 QUICK EXAMPLES OF PUSH-BACK:
+
 1. User: "I'll just drink water, carbs upset my stomach."
+
    Coach: Briefly acknowledge, then explain gut-training protocol & cite Jeukendrup 2021 showing adaptation.
+
 2. User: "I think 30 g/hr is enough for my 4 h ride."
+
    Coach: Explain 60-90 g/hr guidelines for >2.5 h, highlight performance delta.
 
 RULES / SAFEGUARDS:
+
 1. Cite current recommendations (2020-2024 research) when relevant.
+
 2. Keep answers concise (≤ 300 words) using bullet-points where helpful.
+
 3. If uncertain, state uncertainty and suggest a registered dietitian or GP.
+
 4. End with a brief disclaimer: "General educational advice…".
+
 5. No medical diagnosis or treatment.
 `;
   };
-
   /* ------------ API Call ------------ */
   const callOpenAI = async (
     chatHistory: ChatMessage[]
@@ -1674,22 +1630,18 @@ RULES / SAFEGUARDS:
       return null;
     }
   };
-
   /* ------------ Send message ------------ */
   const sendMessage = async (text: string) => {
     if (!text.trim() || !apiKey) return;
     setIsLoading(true);
-
     const newMessages = [
       ...messages,
       { role: 'user', content: text } as ChatMessage
     ];
     setMessages(newMessages);
     setInputText('');
-
     const systemPrompt: ChatMessage = { role: 'system', content: buildSystemPrompt() };
     const reply = await callOpenAI([systemPrompt, ...newMessages]);
-
     if (reply) {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } else {
@@ -1704,7 +1656,6 @@ RULES / SAFEGUARDS:
     }
     setIsLoading(false);
   };
-
   /* ------------ UI helpers ------------ */
   const inputStyle = {
     width: '100%',
@@ -1716,7 +1667,6 @@ RULES / SAFEGUARDS:
     fontSize: '16px',
     outline: 'none'
   };
-
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -1729,7 +1679,6 @@ RULES / SAFEGUARDS:
         <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
         <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
       </div>
-
       {/* API-Key Config */}
       {!apiKey && (
         <div className="card mb-6">
@@ -1755,7 +1704,6 @@ RULES / SAFEGUARDS:
           </button>
         </div>
       )}
-
       {/* Quick Questions */}
       <div className="mb-6 flex flex-wrap gap-2">
         {[
@@ -1774,7 +1722,6 @@ RULES / SAFEGUARDS:
           </button>
         ))}
       </div>
-
       {/* Chat Container */}
       <div className="card mb-6 p-4 h-96 overflow-y-auto">
         <div className="space-y-4">
@@ -1784,9 +1731,71 @@ RULES / SAFEGUARDS:
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
-  className={`max-w-3/4 rounded-2xl px-4 py-3 ${
-    message.role === 'user' 
-      ? 'bg-orange-500 text-white rounded-tr-none' 
-      : 'bg-slate-700 text-slate-100 rounded-tl-none'
-  }`}
->
+                className={`max-w-3/4 rounded-2xl px-4 py-3 ${
+                  message.role === 'user' 
+                    ? 'bg-orange-500 text-white rounded-tr-none' 
+                    : 'bg-slate-700 text-slate-100 rounded-tl-none'
+                }`}
+              >
+                <p className="whitespace-pre-line">{message.content}</p>
+              </div>
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div className="flex items-center">
+              <div className="bg-slate-700 text-slate-100 rounded-2xl rounded-tl-none px-4 py-3">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Input Area */}
+      <div className="flex mb-6">
+        <input
+          type="text"
+          value={inputText}
+          onChange={e => setInputText(e.target.value)}
+          onKeyPress={e => e.key === 'Enter' && sendMessage(inputText)}
+          placeholder="Ask about your nutrition strategy..."
+          className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-l-lg focus:outline-none focus:border-orange-500"
+        />
+        <button
+          onClick={() => sendMessage(inputText)}
+          className={`px-4 py-3 rounded-r-lg ${
+            inputText.trim() && !isLoading
+              ? 'bg-orange-500 text-white' 
+              : 'bg-slate-700 text-slate-400'
+          }`}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      
+      <button
+        onClick={onBack}
+        style={{
+          padding: '12px 24px',
+          backgroundColor: '#475569',
+          color: '#ffffff',
+          borderRadius: '8px',
+          border: 'none',
+          cursor: 'pointer'
+        }}
+      >
+        ← Back to Dashboard
+      </button>
+    </div>
+  );
+};
+
+export default AICarbCoach;
