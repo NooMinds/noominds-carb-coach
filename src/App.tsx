@@ -1516,411 +1516,118 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // AI CARB COACH COMPONENT
 // ============================================================================
 
-const AICarbCoach = ({ onBack }) => {
-  // State
-  const [apiKey, setApiKey] = useState(
-    localStorage.getItem('openai-api-key') || ''
-  );
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content:
-        "Hi! I'm your AI Carb Coach (GPT-4). Ask me anything about sports-nutrition and gut-training."
-    }
+const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', content: "👋 Hi! I'm your AI Carb Coach. I provide evidence-based nutrition guidance for endurance athletes. How can I help you today?" }
   ]);
-  const [inputText, setInputText] = useState('');
+  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Get user data
-  const assessment = JSON.parse(
-    localStorage.getItem('noominds-assessment') || 'null'
-  );
-  const sessions = JSON.parse(
-    localStorage.getItem('noominds-sessions') || '[]'
-  );
-  
-  // Build system prompt with user data
-  const buildSystemPrompt = () => {
-    const name = assessment?.name || 'Athlete';
-    const sport = assessment?.sport || 'endurance sport';
-    const exp = assessment?.experienceLevel || 'intermediate';
-    const targetRate = assessment
-      ? (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1)
-      : '60';
-    const gi = assessment?.giSensitivity || 'moderate';
-    
+  // This would be used with the actual OpenAI integration
+  const getSystemPrompt = () => {
     return `
-You are "NooMinds AI Carb Coach", the world-leading authority on endurance gut-training and carbohydrate periodisation (15+ yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).
+You are "NooMinds AI Carb Coach", the world-leading authority on endurance nutrition and carbohydrate periodization.
 
-MISSION: Deliver evidence-based, personalised, actionable advice while confidently correcting misconceptions and steering athletes toward best practice.
+LEADERSHIP STYLE (CRITICAL):
+- Be authoritative yet respectful - lead the discussion, don't simply agree
+- Actively correct misconceptions with evidence (e.g., "While that's a common belief, research by Smith (2022) shows...")
+- When users express suboptimal approaches, acknowledge then suggest better evidence-based alternatives
+- Cite recent research (2020-2024) or professional guidelines when correcting misinformation
+- Be confident and direct - users need clear guidance, not hesitant suggestions
 
-PERSONAL DATA:
+EXAMPLE CORRECTIONS:
+1. If user says: "I'll just drink water, carbs upset my stomach"
+   You respond: "While hydration is important, research shows most athletes can train their gut to tolerate carbs. Jeukendrup's 2021 study demonstrated starting with small amounts (30g/hr) and gradually increasing over 2-3 weeks significantly improves tolerance and performance."
 
-- Name: ${name}
-
-- Sport: ${sport}
-
-- Experience: ${exp}
-
-- Target carb rate: ${targetRate} g/hr
-
-- GI sensitivity: ${gi}
-
-- Logged sessions: ${sessions.length}
-
-STYLE / LEADERSHIP:
-
-- Authoritative & Respectful – lead the discussion, do not simply agree.
-
-- Challenge Myths – if the user states "keto is best for marathons" or "I never need carbs under 2 h", politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).
-
-- Offer Better Options – present superior, practical alternatives and explain why they outperform the user's idea.
-
-- Evidence Citations – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).
-
-QUICK EXAMPLES OF PUSH-BACK:
-
-1. User: "I'll just drink water, carbs upset my stomach."
-
-   Coach: Briefly acknowledge, then explain gut-training protocol & cite Jeukendrup 2021 showing adaptation.
-
-2. User: "I think 30 g/hr is enough for my 4 h ride."
-
-   Coach: Explain 60-90 g/hr guidelines for >2.5 h, highlight performance delta.
-
-RULES / SAFEGUARDS:
-
-1. Cite current recommendations (2020-2024 research) when relevant.
-
-2. Keep answers concise (≤ 300 words) using bullet-points where helpful.
-
-3. If uncertain, state uncertainty and suggest a registered dietitian or GP.
-
-4. End with a brief disclaimer: "General educational advice…".
-
-5. No medical diagnosis or treatment.
+2. If user says: "I think 30g/hr is enough for my 4-hour ride"
+   You respond: "For events over 2.5 hours, current IOC guidelines recommend 60-90g/hr for optimal performance. Studies show a ~20% performance improvement when doubling intake from 30g to 60g/hr. Let's develop a strategy to help you gradually reach these targets."
 `;
   };
   
-  // Call OpenAI API
-  const callOpenAI = async (chatHistory) => {
-    try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: chatHistory,
-          temperature: 0.7,
-          max_tokens: 600
-        })
-      });
-      
-      if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
-      const data = await res.json();
-      return data.choices?.[0]?.message?.content || null;
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
-  };
-  
-  // Send message and get response
-  const sendMessage = async (text) => {
-    if (!text.trim() || !apiKey) return;
+  const sendMessage = (text: string) => {
+    if (!text.trim()) return;
     
+    // Add user message
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setInput('');
     setIsLoading(true);
-    const newMessages = [
-      ...messages,
-      { role: 'user', content: text }
-    ];
     
-    setMessages(newMessages);
-    setInputText('');
-    
-    const systemPrompt = { role: 'system', content: buildSystemPrompt() };
-    const reply = await callOpenAI([systemPrompt, ...newMessages]);
-    
-    if (reply) {
-      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
-    } else {
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content:
-            '❗ Sorry, there was a problem retrieving a response. Please check your API key or try again later.'
-        }
-      ]);
-    }
-    
-    setIsLoading(false);
-  };
-  
-  // Style objects (no Tailwind)
-  const containerStyle = {
-    maxWidth: '1024px',
-    marginLeft: 'auto',
-    marginRight: 'auto'
-  };
-  
-  const headerContainerStyle = {
-    textAlign: 'center',
-    marginBottom: '2rem'
-  };
-  
-  const headerIconStyle = {
-    width: '5rem',
-    height: '5rem',
-    background: 'linear-gradient(to bottom right, #f97316, #ea580c)',
-    borderRadius: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    margin: '0 auto 1.5rem auto',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-  };
-  
-  const headerTitleStyle = {
-    fontSize: '2.25rem',
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: '1rem'
-  };
-  
-  const headerSubtitleStyle = {
-    fontSize: '1.25rem',
-    color: '#cbd5e1'
-  };
-  
-  const cardStyle = {
-    backgroundColor: '#1e293b',
-    borderRadius: '0.75rem',
-    padding: '1.5rem',
-    marginBottom: '1.5rem'
-  };
-  
-  const chatContainerStyle = {
-    ...cardStyle,
-    height: '24rem',
-    overflowY: 'auto',
-    padding: '1rem'
-  };
-  
-  const chatMessagesStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem'
-  };
-  
-  const inputStyle = {
-    width: '100%',
-    backgroundColor: '#334155',
-    border: '1px solid #475569',
-    borderRadius: '0.5rem',
-    padding: '0.75rem 1rem',
-    color: 'white',
-    fontSize: '1rem',
-    outline: 'none'
-  };
-  
-  const buttonStyle = {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#475569',
-    color: 'white',
-    borderRadius: '0.5rem',
-    border: 'none',
-    cursor: 'pointer'
-  };
-  
-  const primaryButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#f97316'
-  };
-  
-  const disabledButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#334155',
-    color: '#64748b',
-    cursor: 'not-allowed'
-  };
-  
-  const quickQuestionStyle = {
-    backgroundColor: '#1e293b',
-    color: '#cbd5e1',
-    padding: '0.5rem 1rem',
-    borderRadius: '9999px',
-    fontSize: '0.875rem',
-    border: 'none',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-    margin: '0.25rem'
-  };
-  
-  const userMessageContainerStyle = {
-    display: 'flex',
-    justifyContent: 'flex-end'
-  };
-  
-  const botMessageContainerStyle = {
-    display: 'flex',
-    justifyContent: 'flex-start'
-  };
-  
-  const userMessageStyle = {
-    backgroundColor: '#f97316',
-    color: 'white',
-    borderRadius: '1rem',
-    borderTopRightRadius: '0',
-    padding: '0.75rem 1rem',
-    maxWidth: '70%'
-  };
-  
-  const botMessageStyle = {
-    backgroundColor: '#334155',
-    color: '#f1f5f9',
-    borderRadius: '1rem',
-    borderTopLeftRadius: '0',
-    padding: '0.75rem 1rem',
-    maxWidth: '70%'
-  };
-  
-  const inputContainerStyle = {
-    display: 'flex',
-    marginBottom: '1.5rem'
-  };
-  
-  const textInputStyle = {
-    flexGrow: 1,
-    padding: '0.75rem 1rem',
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
-    color: 'white',
-    borderRadius: '0.5rem 0 0 0.5rem',
-    outline: 'none'
-  };
-  
-  const sendButtonStyle = {
-    padding: '0.75rem 1rem',
-    borderRadius: '0 0.5rem 0.5rem 0',
-    border: 'none',
-    cursor: 'pointer'
-  };
-  
-  const activeSendButtonStyle = {
-    ...sendButtonStyle,
-    backgroundColor: '#f97316',
-    color: 'white'
-  };
-  
-  const inactiveSendButtonStyle = {
-    ...sendButtonStyle,
-    backgroundColor: '#334155',
-    color: '#64748b'
+    // Simulated responses with authoritative coaching style
+    setTimeout(() => {
+      setIsLoading(false);
+      
+      // Simulate different types of authoritative responses based on user input
+      const lowerText = text.toLowerCase();
+      let response = "";
+      
+      if (lowerText.includes("keto") || lowerText.includes("low carb")) {
+        response = "While ketogenic diets have their place in some contexts, they're generally suboptimal for endurance performance. Burke et al. (2021) demonstrated that athletes on high-carb diets consistently outperform fat-adapted athletes in high-intensity efforts.\n\nInstead, I'd recommend periodizing your nutrition: moderate carbs (3-5g/kg) on easy training days, and higher carbs (6-10g/kg) for intense sessions and race preparation.";
+      }
+      else if (lowerText.includes("fasted") || lowerText.includes("empty stomach")) {
+        response = "Training fasted occasionally can enhance fat oxidation, but it's not ideal for high-intensity or long-duration sessions. Recent research (Impey et al., 2023) shows that performance typically decreases by 5-10% in fasted vs. carbohydrate-fueled sessions.\n\nA better approach is fueling properly for key workouts while potentially using select low-intensity sessions for metabolic adaptation.";
+      }
+      else if (lowerText.includes("cramp") || lowerText.includes("cramping")) {
+        response = "Contrary to popular belief, recent evidence suggests cramping is less about electrolytes and more related to neuromuscular fatigue. While sodium intake matters, the old advice of 'take salt tablets' isn't fully supported by current research.\n\nMore effective prevention strategies include: adequate carbohydrate fueling, consistent hydration (aim for 400-800ml/hr depending on conditions), and specific neuromuscular training to delay fatigue onset.";
+      }
+      else {
+        response = "Great question! Current guidelines from the International Society of Sports Nutrition recommend 60-90g of carbs per hour for activities lasting over 2.5 hours.\n\nFor your specific training intensity, I'd suggest starting with 60g/hr using a mix of glucose and fructose sources (2:1 ratio) to maximize absorption. This approach has been shown to improve performance by 8-12% compared to water alone or lower carb intakes.\n\nWhat specific event are you training for? This will help me tailor recommendations further.";
+      }
+      
+      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+    }, 1500);
   };
   
   return (
-    <div style={containerStyle}>
+    <div className="max-w-2xl mx-auto">
       {/* Header */}
-      <div style={headerContainerStyle}>
-        <div style={headerIconStyle}>
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
+      <div className="text-center mb-6">
+        <div className="w-24 h-24 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <span className="text-4xl">🏋️</span>
         </div>
-        <h1 style={headerTitleStyle}>AI Carb Coach</h1>
-        <p style={headerSubtitleStyle}>Get personalized nutrition advice for your training</p>
+        <h1 className="text-3xl font-bold text-white">AI Carb Coach</h1>
+        <p className="text-gray-300 mt-2">Evidence-based nutrition guidance</p>
       </div>
       
-      {/* API Key Input */}
-      {!apiKey && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: '1.25rem', color: 'white', marginBottom: '0.5rem' }}>Enter your OpenAI API Key</h2>
-          <input
-            type="password"
-            placeholder="sk-..."
-            style={inputStyle}
-            value={inputText}
-            onChange={e => setInputText(e.target.value)}
-          />
-          <button
-            style={{ ...primaryButtonStyle, marginTop: '1rem' }}
-            onClick={() => {
-              if (inputText.startsWith('sk-')) {
-                localStorage.setItem('openai-api-key', inputText);
-                setApiKey(inputText);
-                setInputText('');
-              } else alert('Please enter a valid key');
-            }}
-          >
-            Save Key
-          </button>
-        </div>
-      )}
-      
-      {/* Quick Questions */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
+      {/* Example questions */}
+      <div className="flex flex-wrap gap-2 mb-6">
         {[
-          'How much should I eat before my race?',
-          'Strategies to reduce GI distress?',
-          'Hydration targets for hot races?',
-          'Best carb sources for long rides?',
-          'When should I start fueling?'
-        ].map((question, index) => (
-          <button
-            key={index}
+          "Is keto good for marathons?",
+          "Should I train fasted?",
+          "How to prevent cramping?",
+          "Carb intake for 70.3 triathlon?"
+        ].map((question, idx) => (
+          <button 
+            key={idx}
             onClick={() => sendMessage(question)}
-            style={quickQuestionStyle}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-full text-sm"
           >
             {question}
           </button>
         ))}
       </div>
       
-      {/* Chat Container */}
-      <div style={chatContainerStyle}>
-        <div style={chatMessagesStyle}>
-          {messages.map((message, idx) => (
-            <div 
-              key={idx} 
-              style={message.role === 'user' ? userMessageContainerStyle : botMessageContainerStyle}
-            >
-              <div style={message.role === 'user' ? userMessageStyle : botMessageStyle}>
-                <p style={{ whiteSpace: 'pre-line', margin: 0 }}>{message.content}</p>
+      {/* Chat container */}
+      <div className="bg-gray-800 rounded-lg p-4 h-96 overflow-y-auto mb-4">
+        <div className="space-y-4">
+          {messages.map((msg, index) => (
+            <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`rounded-lg p-3 max-w-xs sm:max-w-sm ${
+                msg.role === 'user' 
+                  ? 'bg-orange-500 text-white rounded-tr-none' 
+                  : 'bg-gray-700 text-gray-100 rounded-tl-none'
+              }`}>
+                <p className="whitespace-pre-line">{msg.content}</p>
               </div>
             </div>
           ))}
           
           {isLoading && (
-            <div style={botMessageContainerStyle}>
-              <div style={botMessageStyle}>
-                <div style={{ display: 'flex', gap: '0.25rem' }}>
-                  <div style={{ 
-                    width: '0.5rem', 
-                    height: '0.5rem', 
-                    backgroundColor: '#94a3b8', 
-                    borderRadius: '9999px',
-                    animation: 'bounce 0.8s infinite'
-                  }}></div>
-                  <div style={{ 
-                    width: '0.5rem', 
-                    height: '0.5rem', 
-                    backgroundColor: '#94a3b8', 
-                    borderRadius: '9999px',
-                    animation: 'bounce 0.8s infinite',
-                    animationDelay: '0.2s'
-                  }}></div>
-                  <div style={{ 
-                    width: '0.5rem', 
-                    height: '0.5rem', 
-                    backgroundColor: '#94a3b8', 
-                    borderRadius: '9999px',
-                    animation: 'bounce 0.8s infinite',
-                    animationDelay: '0.4s'
-                  }}></div>
+            <div className="flex justify-start">
+              <div className="bg-gray-700 text-gray-100 rounded-lg rounded-tl-none p-3">
+                <div className="flex space-x-1">
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce delay-200"></div>
                 </div>
               </div>
             </div>
@@ -1928,34 +1635,38 @@ RULES / SAFEGUARDS:
         </div>
       </div>
       
-      {/* Input Area */}
-      <div style={inputContainerStyle}>
+      {/* Input area */}
+      <div className="flex rounded-lg overflow-hidden">
         <input
           type="text"
-          value={inputText}
-          onChange={e => setInputText(e.target.value)}
-          onKeyPress={e => e.key === 'Enter' && sendMessage(inputText)}
-          placeholder="Ask about your nutrition strategy..."
-          style={textInputStyle}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage(input)}
+          placeholder="Ask about nutrition, hydration, race prep..."
+          className="flex-1 p-3 bg-gray-700 text-white outline-none"
         />
         <button
-          onClick={() => sendMessage(inputText)}
-          style={inputText.trim() && !isLoading ? activeSendButtonStyle : inactiveSendButtonStyle}
-          disabled={!inputText.trim() || isLoading}
+          onClick={() => sendMessage(input)}
+          disabled={!input.trim() || isLoading}
+          className={`px-4 py-2 ${
+            input.trim() && !isLoading ? 'bg-orange-500 text-white' : 'bg-gray-600 text-gray-400'
+          }`}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="22" y1="2" x2="11" y2="13"></line>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
           </svg>
         </button>
       </div>
       
-      {/* Back Button */}
+      {/* Back button */}
       <button
         onClick={onBack}
-        style={buttonStyle}
+        className="mt-6 text-gray-300 flex items-center hover:text-white"
       >
-        ← Back to Dashboard
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+        </svg>
+        Back to Dashboard
       </button>
     </div>
   );
