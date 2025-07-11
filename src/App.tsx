@@ -1731,11 +1731,13 @@ RULES / SAFEGUARDS:
               className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-                  message.role === 'user' 
-                    ? 'bg-orange-500 text-white rounded-tr-none' 
-                    : 'bg-slate-700 text-slate-100 rounded-tl-none'
-                }`}
+                className="max-w-3xl rounded-2xl px-4 py-3"
+                style={{
+                  backgroundColor: message.role === 'user' ? '#f97316' : '#334155',
+                  color: message.role === 'user' ? '#ffffff' : '#f1f5f9',
+                  borderTopRightRadius: message.role === 'user' ? '0' : undefined,
+                  borderTopLeftRadius: message.role === 'user' ? undefined : '0'
+                }}
               >
                 <p className="whitespace-pre-line">{message.content}</p>
               </div>
