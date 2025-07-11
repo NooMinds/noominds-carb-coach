@@ -1561,7 +1561,7 @@ function AICarbCoach({ onBack }) {
       timestamp: new Date()
     }
   ]);
-  const [inputText, React.useState]('');
+  const [inputText, setInputText] = React.useState('');
   const messagesEndRef = React.useRef(null);
   
   // Get user data from localStorage
