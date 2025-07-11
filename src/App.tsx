@@ -1667,6 +1667,26 @@ RULES / SAFEGUARDS:
     fontSize: '16px',
     outline: 'none'
   };
+  
+  // Added styles for message bubbles to avoid Tailwind CSS issues
+  const userMessageStyle = {
+    backgroundColor: '#f97316', // orange-500
+    color: '#ffffff',
+    borderRadius: '1rem',
+    borderTopRightRadius: '0',
+    padding: '0.75rem 1rem',
+    maxWidth: '75%'
+  };
+  
+  const botMessageStyle = {
+    backgroundColor: '#334155', // slate-700
+    color: '#f1f5f9', // slate-100
+    borderRadius: '1rem',
+    borderTopLeftRadius: '0',
+    padding: '0.75rem 1rem',
+    maxWidth: '75%'
+  };
+  
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -1725,30 +1745,20 @@ RULES / SAFEGUARDS:
       {/* Chat Container */}
       <div className="card mb-6 p-4 h-96 overflow-y-auto">
         <div className="space-y-4">
-         {messages.map((message, idx) => (
-  <div 
-    key={idx} 
-    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-  >
-    <div 
-      className={`max-w-md rounded-2xl px-4 py-3 ${
-        message.role === 'user' 
-          ? 'bg-orange-500 text-white rounded-tr-none' 
-          : 'bg-slate-700 text-slate-100 rounded-tl-none'
-      }`}
-    >
-      <p className="whitespace-pre-line">{message.content}</p>
-    </div>
-  </div>
-))}
-                <p className="whitespace-pre-line">{message.content}</p>
+          {messages.map((message, idx) => (
+            <div 
+              key={idx} 
+              className={message.role === 'user' ? "flex justify-end" : "flex justify-start"}
+            >
+              <div style={message.role === 'user' ? userMessageStyle : botMessageStyle}>
+                <p style={{ whiteSpace: 'pre-line' }}>{message.content}</p>
               </div>
             </div>
           ))}
           
           {isLoading && (
             <div className="flex items-center">
-              <div className="bg-slate-700 text-slate-100 rounded-2xl rounded-tl-none px-4 py-3">
+              <div style={botMessageStyle}>
                 <div className="flex space-x-1">
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
                   <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -1772,11 +1782,10 @@ RULES / SAFEGUARDS:
         />
         <button
           onClick={() => sendMessage(inputText)}
-          className={`px-4 py-3 rounded-r-lg ${
-            inputText.trim() && !isLoading
-              ? 'bg-orange-500 text-white' 
-              : 'bg-slate-700 text-slate-400'
-          }`}
+          className={inputText.trim() && !isLoading
+            ? "px-4 py-3 rounded-r-lg bg-orange-500 text-white" 
+            : "px-4 py-3 rounded-r-lg bg-slate-700 text-slate-400"
+          }
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="22" y1="2" x2="11" y2="13"></line>
