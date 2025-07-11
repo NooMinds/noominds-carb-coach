@@ -1553,7 +1553,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
 function AICarbCoach({ onBack }) {
   // Simple state management
-  const [messages, React.useState]([
+  const [messages, setMessages] = React.useState([
     {
       id: '1',
       type: 'coach',
