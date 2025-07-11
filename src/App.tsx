@@ -1513,56 +1513,26 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 };
 
 // ============================================================================
-// AI CARB COACH COMPONENT
+// AI CARB COACH COMPONENT - TEMPORARY MINIMAL VERSION
 // ============================================================================
 
-const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+const AICarbCoach = ({ onBack }) => {
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", textAlign: "center" }}>
-      <h1 style={{ fontSize: "2rem", color: "white", marginBottom: "1rem" }}>AI Carb Coach</h1>
-      <p style={{ color: "#cbd5e1", marginBottom: "2rem" }}>
-        Expert nutrition guidance for endurance athletes
-      </p>
-      
-      <div style={{ 
-        backgroundColor: "#1e293b", 
-        padding: "2rem", 
-        borderRadius: "0.5rem",
-        marginBottom: "2rem" 
-      }}>
-        <div style={{ 
-          width: "80px", 
-          height: "80px", 
-          backgroundColor: "#f97316", 
-          borderRadius: "50%", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center",
-          margin: "0 auto 1rem auto",
-          fontSize: "2rem" 
-        }}>
-          🏋️
-        </div>
-        <h2 style={{ color: "white", marginBottom: "1rem" }}>Coming Soon!</h2>
-        <p style={{ color: "#94a3b8" }}>
-          The AI Carb Coach feature is currently being optimized for performance.
-          <br />
-          Check back soon for personalized nutrition advice from our expert system.
-        </p>
-      </div>
-      
+    <div style={{textAlign: 'center', padding: '2rem'}}>
+      <h1 style={{color: 'white', fontSize: '2rem'}}>AI Carb Coach</h1>
+      <p style={{color: '#a1a1aa', marginBottom: '2rem'}}>Coming soon</p>
       <button 
         onClick={onBack}
         style={{
-          backgroundColor: "#475569",
-          color: "white",
-          border: "none",
-          padding: "0.75rem 1.5rem",
-          borderRadius: "0.5rem",
-          cursor: "pointer"
+          backgroundColor: '#475569',
+          color: 'white',
+          border: 'none',
+          padding: '0.75rem 1.5rem',
+          borderRadius: '0.5rem',
+          cursor: 'pointer'
         }}
       >
-        ← Back to Dashboard
+        Back to Dashboard
       </button>
     </div>
   );
