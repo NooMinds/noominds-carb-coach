@@ -1787,4 +1787,4 @@ RULES / SAFEGUARDS:
                 className={`max-w-3/4 rounded-2xl px-4 py-3 ${
                   message.role === 'user' 
                     ? 'bg-orange-500 text-white rounded-tr-none' 
-                    : 'bg-slate-700 text-slate-
+                    'bg-slate-700 text-slate-100 rounded-tl-none'
