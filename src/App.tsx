@@ -1516,19 +1516,12 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // AI CARB COACH COMPONENT
 // ============================================================================
 
-interface Message {
-  id: string;
-  type: 'user' | 'coach';
-  text: string;
-  timestamp: Date;
-}
-
-const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  /* ---------------- State ------------------ */
-  const [apiKey, setApiKey] = useState<string>(
+const AICarbCoach = ({ onBack }) => {
+  // State
+  const [apiKey, setApiKey] = useState(
     localStorage.getItem('openai-api-key') || ''
   );
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState([
     {
       role: 'assistant',
       content:
@@ -1537,14 +1530,17 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  /* ------------ Helpers ------------ */
-  const assessment: AssessmentResult | null = JSON.parse(
+  
+  // Get user data
+  const assessment = JSON.parse(
     localStorage.getItem('noominds-assessment') || 'null'
   );
-  const sessions: Session[] = JSON.parse(
+  const sessions = JSON.parse(
     localStorage.getItem('noominds-sessions') || '[]'
   );
-  const buildSystemPrompt = (): string => {
+  
+  // Build system prompt with user data
+  const buildSystemPrompt = () => {
     const name = assessment?.name || 'Athlete';
     const sport = assessment?.sport || 'endurance sport';
     const exp = assessment?.experienceLevel || 'intermediate';
@@ -1552,6 +1548,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       ? (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1)
       : '60';
     const gi = assessment?.giSensitivity || 'moderate';
+    
     return `
 You are "NooMinds AI Carb Coach", the world-leading authority on endurance gut-training and carbohydrate periodisation (15+ yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).
 
@@ -1604,10 +1601,9 @@ RULES / SAFEGUARDS:
 5. No medical diagnosis or treatment.
 `;
   };
-  /* ------------ API Call ------------ */
-  const callOpenAI = async (
-    chatHistory: ChatMessage[]
-  ): Promise<string | null> => {
+  
+  // Call OpenAI API
+  const callOpenAI = async (chatHistory) => {
     try {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -1616,12 +1612,13 @@ RULES / SAFEGUARDS:
           Authorization: `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini', // cheaper; change to 'gpt-4o' if desired
+          model: 'gpt-4o-mini',
           messages: chatHistory,
           temperature: 0.7,
           max_tokens: 600
         })
       });
+      
       if (!res.ok) throw new Error(`OpenAI error ${res.status}`);
       const data = await res.json();
       return data.choices?.[0]?.message?.content || null;
@@ -1630,18 +1627,23 @@ RULES / SAFEGUARDS:
       return null;
     }
   };
-  /* ------------ Send message ------------ */
-  const sendMessage = async (text: string) => {
+  
+  // Send message and get response
+  const sendMessage = async (text) => {
     if (!text.trim() || !apiKey) return;
+    
     setIsLoading(true);
     const newMessages = [
       ...messages,
-      { role: 'user', content: text } as ChatMessage
+      { role: 'user', content: text }
     ];
+    
     setMessages(newMessages);
     setInputText('');
-    const systemPrompt: ChatMessage = { role: 'system', content: buildSystemPrompt() };
+    
+    const systemPrompt = { role: 'system', content: buildSystemPrompt() };
     const reply = await callOpenAI([systemPrompt, ...newMessages]);
+    
     if (reply) {
       setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
     } else {
@@ -1654,55 +1656,189 @@ RULES / SAFEGUARDS:
         }
       ]);
     }
+    
     setIsLoading(false);
   };
-  /* ------------ UI helpers ------------ */
+  
+  // Style objects (no Tailwind)
+  const containerStyle = {
+    maxWidth: '1024px',
+    marginLeft: 'auto',
+    marginRight: 'auto'
+  };
+  
+  const headerContainerStyle = {
+    textAlign: 'center',
+    marginBottom: '2rem'
+  };
+  
+  const headerIconStyle = {
+    width: '5rem',
+    height: '5rem',
+    background: 'linear-gradient(to bottom right, #f97316, #ea580c)',
+    borderRadius: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 1.5rem auto',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+  };
+  
+  const headerTitleStyle = {
+    fontSize: '2.25rem',
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: '1rem'
+  };
+  
+  const headerSubtitleStyle = {
+    fontSize: '1.25rem',
+    color: '#cbd5e1'
+  };
+  
+  const cardStyle = {
+    backgroundColor: '#1e293b',
+    borderRadius: '0.75rem',
+    padding: '1.5rem',
+    marginBottom: '1.5rem'
+  };
+  
+  const chatContainerStyle = {
+    ...cardStyle,
+    height: '24rem',
+    overflowY: 'auto',
+    padding: '1rem'
+  };
+  
+  const chatMessagesStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
+  };
+  
   const inputStyle = {
     width: '100%',
     backgroundColor: '#334155',
     border: '1px solid #475569',
-    borderRadius: '8px',
-    padding: '12px 16px',
-    color: '#ffffff',
-    fontSize: '16px',
+    borderRadius: '0.5rem',
+    padding: '0.75rem 1rem',
+    color: 'white',
+    fontSize: '1rem',
     outline: 'none'
   };
   
-  // Added styles for message bubbles to avoid Tailwind CSS issues
+  const buttonStyle = {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#475569',
+    color: 'white',
+    borderRadius: '0.5rem',
+    border: 'none',
+    cursor: 'pointer'
+  };
+  
+  const primaryButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#f97316'
+  };
+  
+  const disabledButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#334155',
+    color: '#64748b',
+    cursor: 'not-allowed'
+  };
+  
+  const quickQuestionStyle = {
+    backgroundColor: '#1e293b',
+    color: '#cbd5e1',
+    padding: '0.5rem 1rem',
+    borderRadius: '9999px',
+    fontSize: '0.875rem',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    margin: '0.25rem'
+  };
+  
+  const userMessageContainerStyle = {
+    display: 'flex',
+    justifyContent: 'flex-end'
+  };
+  
+  const botMessageContainerStyle = {
+    display: 'flex',
+    justifyContent: 'flex-start'
+  };
+  
   const userMessageStyle = {
-    backgroundColor: '#f97316', // orange-500
-    color: '#ffffff',
+    backgroundColor: '#f97316',
+    color: 'white',
     borderRadius: '1rem',
     borderTopRightRadius: '0',
     padding: '0.75rem 1rem',
-    maxWidth: '75%'
+    maxWidth: '70%'
   };
   
   const botMessageStyle = {
-    backgroundColor: '#334155', // slate-700
-    color: '#f1f5f9', // slate-100
+    backgroundColor: '#334155',
+    color: '#f1f5f9',
     borderRadius: '1rem',
     borderTopLeftRadius: '0',
     padding: '0.75rem 1rem',
-    maxWidth: '75%'
+    maxWidth: '70%'
+  };
+  
+  const inputContainerStyle = {
+    display: 'flex',
+    marginBottom: '1.5rem'
+  };
+  
+  const textInputStyle = {
+    flexGrow: 1,
+    padding: '0.75rem 1rem',
+    backgroundColor: '#1e293b',
+    border: '1px solid #334155',
+    color: 'white',
+    borderRadius: '0.5rem 0 0 0.5rem',
+    outline: 'none'
+  };
+  
+  const sendButtonStyle = {
+    padding: '0.75rem 1rem',
+    borderRadius: '0 0.5rem 0.5rem 0',
+    border: 'none',
+    cursor: 'pointer'
+  };
+  
+  const activeSendButtonStyle = {
+    ...sendButtonStyle,
+    backgroundColor: '#f97316',
+    color: 'white'
+  };
+  
+  const inactiveSendButtonStyle = {
+    ...sendButtonStyle,
+    backgroundColor: '#334155',
+    color: '#64748b'
   };
   
   return (
-    <div className="max-w-4xl mx-auto">
+    <div style={containerStyle}>
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+      <div style={headerContainerStyle}>
+        <div style={headerIconStyle}>
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
-        <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
-        <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
+        <h1 style={headerTitleStyle}>AI Carb Coach</h1>
+        <p style={headerSubtitleStyle}>Get personalized nutrition advice for your training</p>
       </div>
-      {/* API-Key Config */}
+      
+      {/* API Key Input */}
       {!apiKey && (
-        <div className="card mb-6">
-          <h2 className="text-xl text-white mb-2">Enter your OpenAI API Key</h2>
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.25rem', color: 'white', marginBottom: '0.5rem' }}>Enter your OpenAI API Key</h2>
           <input
             type="password"
             placeholder="sk-..."
@@ -1711,7 +1847,7 @@ RULES / SAFEGUARDS:
             onChange={e => setInputText(e.target.value)}
           />
           <button
-            className="btn-primary mt-4"
+            style={{ ...primaryButtonStyle, marginTop: '1rem' }}
             onClick={() => {
               if (inputText.startsWith('sk-')) {
                 localStorage.setItem('openai-api-key', inputText);
@@ -1724,8 +1860,9 @@ RULES / SAFEGUARDS:
           </button>
         </div>
       )}
+      
       {/* Quick Questions */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1.5rem' }}>
         {[
           'How much should I eat before my race?',
           'Strategies to reduce GI distress?',
@@ -1736,33 +1873,54 @@ RULES / SAFEGUARDS:
           <button
             key={index}
             onClick={() => sendMessage(question)}
-            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full text-sm transition-colors"
+            style={quickQuestionStyle}
           >
             {question}
           </button>
         ))}
       </div>
+      
       {/* Chat Container */}
-      <div className="card mb-6 p-4 h-96 overflow-y-auto">
-        <div className="space-y-4">
+      <div style={chatContainerStyle}>
+        <div style={chatMessagesStyle}>
           {messages.map((message, idx) => (
             <div 
               key={idx} 
-              className={message.role === 'user' ? "flex justify-end" : "flex justify-start"}
+              style={message.role === 'user' ? userMessageContainerStyle : botMessageContainerStyle}
             >
               <div style={message.role === 'user' ? userMessageStyle : botMessageStyle}>
-                <p style={{ whiteSpace: 'pre-line' }}>{message.content}</p>
+                <p style={{ whiteSpace: 'pre-line', margin: 0 }}>{message.content}</p>
               </div>
             </div>
           ))}
           
           {isLoading && (
-            <div className="flex items-center">
+            <div style={botMessageContainerStyle}>
               <div style={botMessageStyle}>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <div style={{ 
+                    width: '0.5rem', 
+                    height: '0.5rem', 
+                    backgroundColor: '#94a3b8', 
+                    borderRadius: '9999px',
+                    animation: 'bounce 0.8s infinite'
+                  }}></div>
+                  <div style={{ 
+                    width: '0.5rem', 
+                    height: '0.5rem', 
+                    backgroundColor: '#94a3b8', 
+                    borderRadius: '9999px',
+                    animation: 'bounce 0.8s infinite',
+                    animationDelay: '0.2s'
+                  }}></div>
+                  <div style={{ 
+                    width: '0.5rem', 
+                    height: '0.5rem', 
+                    backgroundColor: '#94a3b8', 
+                    borderRadius: '9999px',
+                    animation: 'bounce 0.8s infinite',
+                    animationDelay: '0.4s'
+                  }}></div>
                 </div>
               </div>
             </div>
@@ -1771,21 +1929,19 @@ RULES / SAFEGUARDS:
       </div>
       
       {/* Input Area */}
-      <div className="flex mb-6">
+      <div style={inputContainerStyle}>
         <input
           type="text"
           value={inputText}
           onChange={e => setInputText(e.target.value)}
           onKeyPress={e => e.key === 'Enter' && sendMessage(inputText)}
           placeholder="Ask about your nutrition strategy..."
-          className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-l-lg focus:outline-none focus:border-orange-500"
+          style={textInputStyle}
         />
         <button
           onClick={() => sendMessage(inputText)}
-          className={inputText.trim() && !isLoading
-            ? "px-4 py-3 rounded-r-lg bg-orange-500 text-white" 
-            : "px-4 py-3 rounded-r-lg bg-slate-700 text-slate-400"
-          }
+          style={inputText.trim() && !isLoading ? activeSendButtonStyle : inactiveSendButtonStyle}
+          disabled={!inputText.trim() || isLoading}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -1794,16 +1950,10 @@ RULES / SAFEGUARDS:
         </button>
       </div>
       
+      {/* Back Button */}
       <button
         onClick={onBack}
-        style={{
-          padding: '12px 24px',
-          backgroundColor: '#475569',
-          color: '#ffffff',
-          borderRadius: '8px',
-          border: 'none',
-          cursor: 'pointer'
-        }}
+        style={buttonStyle}
       >
         ← Back to Dashboard
       </button>
