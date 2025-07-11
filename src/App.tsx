@@ -1735,10 +1735,10 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           {messages.map(message => (
             <div 
               key={message.id} 
-              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.type ==={ 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
-                className={`max-w-3/4 rounded-2xl px-4 py-3 ${
+                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                   message.type === 'user' 
                     ? 'bg-orange-500 text-white rounded-tr-none' 
                     : 'bg-slate-700 text-slate-200 rounded-tl-none'
