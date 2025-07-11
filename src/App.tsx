@@ -1,87 +1,56 @@
 import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
-
 import './App.css';
 
 // ============================================================================
-// TYPE DEFINITIONS
+// TYPES
 // ============================================================================
-
-/**
- * Basic user profile information
- */
 interface Client {
-  name: string;                // Full name
-  email: string;               // Email address
-  age: number;                 // Age in years
-  weight: number;              // Weight in kg
-  height: number;              // Height in cm
-  gender: string;              // 'Female' | 'Male' | 'Non-binary' | 'Prefer not to say'
-  sport: string;               // Primary sport (e.g., 'Cycling', 'Running', 'Triathlon')
-  experienceLevel: string;     // 'Beginner' | 'Intermediate' | 'Advanced' | 'Elite'
-  targetEvents: string[];      // Array of target event names
+  name: string;
+  email: string;
+  age: number;
+  weight: number;
+  height: number;
+  gender: string;
+  sport: string;
+  experienceLevel: string;
+  targetEvents: string[];
 }
 
-/**
- * Individual training session data
- */
 interface Session {
-  id: string;                  // Unique identifier
-  date: string;                // ISO string date format
-  sport: string;               // Sport type for this session
-  duration: number;            // Session duration in minutes
-  carbs: number;               // Total carbohydrates consumed in grams
-  fluids: number;              // Total fluid intake in milliliters
-  symptomSeverity: number;     // GI symptom severity on 0-10 scale
-  rpe: number;                 // Rate of perceived exertion on 1-10 scale
-  notes: string;               // Additional session notes
+  id: string;
+  date: string;
+  sport: string;
+  duration: number;
+  carbs: number;
+  fluids: number;
+  symptomSeverity: number;
+  rpe: number;
+  notes: string;
 }
 
-/**
- * Saved assessment output (used across components)
- */
 interface AssessmentResult {
-  /* Calculated results */
-  targetCarbs: number;         // Recommended carbs in grams (total session)
-  giSensitivity: string;       // 'none' | 'moderate' | 'high'
-  recommendations: string[];   // Array of personalized recommendations
-  /* Raw questionnaire data */
-  symptoms: string[];          // Array of reported symptoms
-  date: string;                // ISO timestamp of assessment completion
-  name: string;                // User's name
-  email: string;               // User's email
-  age: number;                 // User's age in years
-  weight: number;              // User's weight in kg
-  height: number;              // User's height in cm
-  gender: string;              // User's gender
-  sport: string;               // User's primary sport
-  experienceLevel: string;     // User's experience level
-  targetEvents: string[];      // User's target events
-  eventDate: string;           // Date of target event
-  duration: number;            // Expected duration in minutes
-  intensity: string;           // 'low' | 'moderate' | 'high'
+  targetCarbs: number;
+  giSensitivity: string;
+  recommendations: string[];
+  symptoms: string[];
+  date: string;
+  name: string;
+  email: string;
+  age: number;
+  weight: number;
+  height: number;
+  gender: string;
+  sport: string;
+  experienceLevel: string;
+  targetEvents: string[];
+  eventDate: string;
+  duration: number;
+  intensity: string;
 }
-
-/**
- * Race plan block for event planning
- */
-interface RacePlanBlock {
-  time: string;                // Time marker (e.g., "00:00", "01:00")
-  carbs: string;               // Carb recommendation with units (e.g., "60 g")
-  fluids: string;              // Fluid recommendation with units (e.g., "650 ml")
-}
-
-/**
- * Chat message for AI Carb Coach
- */
-type ChatMessage = { 
-  role: 'system' | 'user' | 'assistant'; 
-  content: string 
-};
 
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-
 const mockClient: Client = {
   name: 'Sarah Johnson',
   email: 'sarah.j@example.com',
@@ -97,7 +66,6 @@ const mockClient: Client = {
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
-
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -106,7 +74,6 @@ function formatDate(dateString: string): string {
 // ============================================================================
 // CARB CALCULATION FUNCTIONS
 // ============================================================================
-
 function calculateTargetCarbs(
   weight: number,
   duration: number,
@@ -130,10 +97,12 @@ function calculateTargetCarbs(
   if (duration >= 150) { // 2.5+ hours
     durationFactor = 1.1; // 10% increase for longer events
   }
+
   /* ------------------------------------------------------------------
      GI sensitivity should NOT reduce the physiological carb requirement.
      It will be used purely for visual / tracking purposes elsewhere.
      ------------------------------------------------------------------ */
+
   // Calculate target carbs per hour (no GI penalty)
   const targetCarbsPerHour = baseRate * durationFactor;
   
@@ -193,7 +162,6 @@ function generateRecommendations(
 // ============================================================================
 // ASSESSMENT COMPONENT
 // ============================================================================
-
 const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ onBack, onComplete }) => {
   const [formData, setFormData] = useState({
     // Personal Details
@@ -218,9 +186,11 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     giHistory: 'none',
     symptoms: [] as string[],
   });
+
   const [showResults, setShowResults] = useState(false);
   const [targetCarbs, setTargetCarbs] = useState(0);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+
   // Input styling for white text on dark background
   const inputStyle = {
     width: '100%',
@@ -232,12 +202,14 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
     fontSize: '16px',
     outline: 'none'
   };
+
   const labelStyle = {
     color: '#ffffff',
     fontWeight: '500',
     marginBottom: '8px',
     display: 'block'
   };
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
@@ -261,6 +233,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
       }));
     }
   };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -324,6 +297,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
       alert('There was an error calculating your carb needs. Please try again.');
     }
   };
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -336,6 +310,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
         <h1 className="text-4xl font-bold text-white mb-4">Carb Needs Assessment</h1>
         <p className="text-xl text-slate-300">Calculate your personalized carbohydrate requirements</p>
       </div>
+
       {!showResults ? (
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Personal Details */}
@@ -424,6 +399,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
+
           {/* Sport & Experience */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -487,6 +463,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
+
           {/* Exercise Details */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -524,6 +501,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             </div>
           </div>
+
           {/* GI History */}
           <div className="card">
             <div className="flex items-center mb-6">
@@ -545,6 +523,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
                 <option value="high">High (Frequent GI issues)</option>
               </select>
             </div>
+
             {formData.giHistory !== 'none' && (
               <div className="mt-6">
                 <label style={labelStyle}>Common Symptoms (Select all that apply)</label>
@@ -567,6 +546,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               </div>
             )}
           </div>
+
           {/* Action Buttons */}
           <div className="flex justify-between items-center pt-8">
             <button 
@@ -618,6 +598,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               <p className="text-slate-400">Recommended hourly intake</p>
             </div>
           </div>
+
           {/* Recommendations */}
           <div className="card">
             <h2 className="text-2xl font-bold text-white mb-6">Personalized Recommendations</h2>
@@ -634,6 +615,7 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
               ))}
             </ul>
           </div>
+
           {/* Action Buttons */}
           <div className="flex justify-between items-center pt-4">
             <button 
@@ -665,10 +647,10 @@ const Assessment: React.FC<{ onBack: () => void; onComplete: () => void }> = ({ 
 // ============================================================================
 // DASHBOARD COMPONENT
 // ============================================================================
-
 const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }> = ({ client, onNavigate }) => {
   const [assessmentResult, setAssessmentResult] = useState<AssessmentResult | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+
   // Load assessment and sessions from localStorage
   useEffect(() => {
     const savedAssessment = localStorage.getItem('noominds-assessment');
@@ -681,6 +663,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       setSessions(JSON.parse(savedSessions));
     }
   }, []);
+
   // Calculate metrics
   const calculateMetrics = () => {
     // Default values
@@ -688,6 +671,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
     let avgCarbs = 0;
     let avgSymptoms = 0;
     let consistency = 0;
+
     if (sessions.length > 0) {
       /* ---------- Average carbohydrate intake (g/hr) ---------- */
       avgCarbs =
@@ -695,6 +679,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           (sum, session) => sum + session.carbs / (session.duration / 60),
           0
         ) / sessions.length;
+
       /* ---------- Average symptom severity (0–10) ------------- */
       avgSymptoms =
         sessions.reduce(
@@ -703,9 +688,11 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
         ) / sessions.length;
       // Clamp between 0 and 10
       avgSymptoms = Math.max(0, Math.min(10, avgSymptoms));
+
       /* ---------- Consistency: unique training days in last 7 d */
       const last7Days = new Date();
       last7Days.setDate(last7Days.getDate() - 7);
+
       const recentSessions = sessions.filter(
         session => new Date(session.date) >= last7Days
       );
@@ -715,6 +702,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       );
       consistency = Math.min(100, (uniqueDays.size / 7) * 100); // Cap at 100%
     }
+
     /* ---------- Event readiness status rules ------------------ */
     if (!assessmentResult) {
       eventReadiness = 'Not Ready';
@@ -723,6 +711,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       const targetCarbRate =
         assessmentResult.targetCarbs / (assessmentResult.duration / 60);
       const carbGap = Math.abs(targetCarbRate - avgCarbs);
+
       if (avgSymptoms > 5) {
         eventReadiness = 'Caution'; // high symptom burden
       } else if (sessions.length < 3) {
@@ -735,6 +724,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
         eventReadiness = 'Ready'; // within acceptable range
       }
     }
+
     return {
       eventReadiness,
       avgCarbs: avgCarbs.toFixed(1),
@@ -742,12 +732,15 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       consistency: Math.round(consistency),
     };
   };
+
   const metrics = calculateMetrics();
+
   // Calculate target carb rate from assessment
   const getTargetCarbRate = () => {
     if (!assessmentResult) return '0.0';
     return (assessmentResult.targetCarbs / (assessmentResult.duration / 60)).toFixed(1);
   };
+
   /* ------------------------------------------------------------------
      Build tooltip explaining the readiness status logic
   ------------------------------------------------------------------ */
@@ -756,6 +749,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
   const avgCarbsNum = Number(metrics.avgCarbs);
   const carbGap = Math.abs(targetRateNum - avgCarbsNum);
   const avgSymptomsNum = Number(metrics.avgSymptoms);
+
   let statusTooltip = 'Complete assessment to set carb targets';
   if (assessmentResult) {
     if (avgSymptomsNum > 5) {
@@ -776,12 +770,14 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       )}g/hr, Gap: ${carbGap.toFixed(1)}g/hr within acceptable range`;
     }
   }
+
   /* ------------------------------------------------------------------
      DISPLAY INFO: Prefer real assessment data over mock client
   ------------------------------------------------------------------ */
   const displayName = assessmentResult?.name || client.name;
   const displaySport = assessmentResult?.sport || client.sport;
   const displayExperience = assessmentResult?.experienceLevel || client.experienceLevel;
+
   /* ------------------------------------------------------------------
      RESET DATA: Clear all stored data and reset dashboard state
   ------------------------------------------------------------------ */
@@ -790,14 +786,17 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
       '⚠️  This will permanently delete all saved assessments, sessions, and event plans. Are you sure you want to continue?'
     );
     if (!confirmReset) return;
+
     // Clear localStorage keys
     localStorage.removeItem('noominds-assessment');
     localStorage.removeItem('noominds-sessions');
     localStorage.removeItem('noominds-event-plans');
+
     // Reset component state
     setAssessmentResult(null);
     setSessions([]);
   };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -816,6 +815,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           </div>
         </div>
       </div>
+
       {/* Event Readiness */}
       <div className="card mb-8">
         <h2 className="text-2xl font-bold text-white mb-6">Event Readiness</h2>
@@ -858,6 +858,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           </div>
         </div>
       </div>
+
       {/* Reset Data Button */}
       <div className="flex justify-end mb-10">
         <button
@@ -875,6 +876,7 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
           🗑️ Reset All Data
         </button>
       </div>
+
       {/* Feature Tiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {/* Assessment Tile */}
@@ -983,7 +985,6 @@ const Dashboard: React.FC<{ client: Client; onNavigate: (view: string) => void }
 // ============================================================================
 // SESSION LOGGER COMPONENT
 // ============================================================================
-
 const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Session, 'id'>) => void }> = ({ onBack, onSave }) => {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -995,7 +996,9 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
     rpe: 5,
     notes: ''
   });
+
   const [showSuccess, setShowSuccess] = useState(false);
+
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -1003,6 +1006,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       [name]: type === 'number' ? Number(value) : value
     }));
   };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
@@ -1010,9 +1014,11 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       ...formData,
       id: Date.now().toString()
     };
+
     const existingSessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
     existingSessions.push(newSession);
     localStorage.setItem('noominds-sessions', JSON.stringify(existingSessions));
+
     setShowSuccess(true);
     
     setFormData({
@@ -1025,10 +1031,12 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
       rpe: 5,
       notes: ''
     });
+
     setTimeout(() => {
       setShowSuccess(false);
     }, 3000);
   };
+
   const inputStyle = {
     width: '100%',
     backgroundColor: '#334155',
@@ -1039,13 +1047,16 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
     fontSize: '16px',
     outline: 'none'
   };
+
   const labelStyle = {
     color: '#ffffff',
     fontWeight: '500',
     marginBottom: '8px',
     display: 'block'
   };
+
   const carbRate = formData.duration > 0 ? (formData.carbs / (formData.duration / 60)).toFixed(1) : 0;
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
@@ -1059,6 +1070,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
         <h1 className="text-4xl font-bold text-white mb-4">Log Training Session</h1>
         <p className="text-xl text-slate-300">Track your fueling and gut response during training</p>
       </div>
+
       {showSuccess && (
         <div className="card bg-green-500/10 border-2 border-green-500/30 mb-8">
           <div className="flex items-center">
@@ -1075,6 +1087,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
           </div>
         </div>
       )}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="card">
           <div className="flex items-center mb-6">
@@ -1144,6 +1157,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
+
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1184,6 +1198,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
+
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1226,6 +1241,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             </div>
           </div>
         </div>
+
         <div className="card">
           <div className="flex items-center mb-6">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center mr-4">
@@ -1245,6 +1261,7 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
             />
           </div>
         </div>
+
         <div className="flex justify-between items-center pt-8">
           <button 
             type="button"
@@ -1275,6 +1292,11 @@ const SessionLogger: React.FC<{ onBack: () => void; onSave: (session: Omit<Sessi
 // ============================================================================
 // EVENT PLANNER COMPONENT
 // ============================================================================
+interface RacePlanBlock {
+  time: string;
+  carbs: string;
+  fluids: string;
+}
 
 const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   // pull assessment for target carb rate & GI flag
@@ -1285,6 +1307,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     assessment && assessment.duration
       ? assessment.targetCarbs / (assessment.duration / 60)
       : 60; // sensible default
+
   const [formData, setFormData] = useState({
     raceName: '',
     duration: 180, // minutes
@@ -1295,6 +1318,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   });
   const [plan, setPlan] = useState<RacePlanBlock[] | null>(null);
   const [saved, setSaved] = useState(false);
+
   const inputStyle = {
     width: '100%',
     backgroundColor: '#334155',
@@ -1311,6 +1335,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     marginBottom: '8px',
     display: 'block'
   };
+
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -1318,23 +1343,29 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       [name]: type === 'number' ? Number(value) : value
     }));
   };
+
   const handleGenerate = (e: FormEvent) => {
     e.preventDefault();
     const blocks: RacePlanBlock[] = [];
+
     /* -----------------------------------------
        Calculate hourly carb requirement on the fly
     ----------------------------------------- */
     let baseRate = 60;
     if (formData.intensity === 'high') baseRate = 75;
     else if (formData.intensity === 'low') baseRate = 40;
+
     let durationFactor = 1.0;
     if (formData.duration >= 150) durationFactor = 1.1; // 10 % bump
+
     const hourlyCarbs = baseRate * durationFactor;
+
     /* ---------------- Fluid calculation ---------------- */
     let fluidsPerHour = 650; // default for normal
     if (formData.temperature === 'cold') fluidsPerHour = 450;
     if (formData.temperature === 'hot')  fluidsPerHour = 900;
     if (formData.humidity === 'high')    fluidsPerHour += 150;
+
     /* -----------------------------------------------------------
        Create plan blocks every 60 minutes instead of every 20 min
        ----------------------------------------------------------- */
@@ -1356,6 +1387,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setPlan(blocks);
     setSaved(false);
   };
+
   const handleSave = () => {
     if (!plan) return;
     const stored = JSON.parse(localStorage.getItem('noominds-event-plans') || '[]');
@@ -1367,6 +1399,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     localStorage.setItem('noominds-event-plans', JSON.stringify(stored));
     setSaved(true);
   };
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -1379,6 +1412,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <h1 className="text-4xl font-bold text-white mb-4">Event Planner</h1>
         <p className="text-xl text-slate-300">Build your race-day nutrition plan</p>
       </div>
+
       {/* Form */}
       <form onSubmit={handleGenerate} className="space-y-8">
         <div className="card">
@@ -1439,9 +1473,9 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 onChange={handleChange}
                 style={inputStyle}
               >
-                <option value="cold">Cold (<10 °C)</option>
+                <option value="cold">Cold (&lt;10 °C)</option>
                 <option value="normal">Normal (10 – 25 °C)</option>
-                <option value="hot">Hot (>25 °C)</option>
+                <option value="hot">Hot (&gt;25 °C)</option>
               </select>
             </div>
             <div>
@@ -1478,6 +1512,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </button>
         </div>
       </form>
+
       {/* Plan Preview */}
       {plan && (
         <div className="card mt-8">
@@ -1513,29 +1548,327 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 };
 
 // ============================================================================
-// AI CARB COACH COMPONENT - TEMPORARY MINIMAL VERSION
+// AI CARB COACH COMPONENT
 // ============================================================================
+interface Message {
+  id: string;
+  type: 'user' | 'coach';
+  text: string;
+  timestamp: Date;
+}
 
-const AICarbCoach = ({ onBack }) => {
+const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      type: 'coach',
+      text: 'Hi there! I\'m your AI Carb Coach. How can I help with your nutrition questions today?',
+      timestamp: new Date()
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const assessment = JSON.parse(localStorage.getItem('noominds-assessment') || 'null');
+  const sessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
+
+  // Quick questions
+  const quickQuestions = [
+    "How much should I eat before my race?",
+    "What if I get stomach issues?",
+    "Best carb sources for long events?",
+    "How to avoid bonking?",
+    "When should I start fueling?"
+  ];
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSendMessage = (e: FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      text: inputText,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Generate AI response
+    setTimeout(() => {
+      const response = generateResponse(inputText);
+      const coachMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'coach',
+        text: response,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, coachMessage]);
+    }, 500);
+    
+    setInputText('');
+  };
+
+  const handleQuickQuestion = (question: string) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      text: question,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    
+    // Generate AI response
+    setTimeout(() => {
+      const response = generateResponse(question);
+      const coachMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'coach',
+        text: response,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, coachMessage]);
+    }, 500);
+  };
+
+  const generateResponse = (question: string): string => {
+    // Personalized responses based on assessment data
+    const targetCarbRate = assessment ? 
+      (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1) : '60';
+    const giSensitivity = assessment ? assessment.giSensitivity : 'moderate';
+    const sport = assessment ? assessment.sport : 'endurance sports';
+    const avgSymptoms = sessions.length > 0 ? 
+      (sessions.reduce((sum: number, s: any) => sum + s.symptomSeverity, 0) / sessions.length).toFixed(1) : 'unknown';
+    
+    // Normalize question for matching
+    const normalizedQuestion = question.toLowerCase();
+    
+    // Pre-race nutrition
+    if (normalizedQuestion.includes('before race') || normalizedQuestion.includes('pre-race') || normalizedQuestion.includes('before event')) {
+      if (giSensitivity === 'high') {
+        return `Based on your high GI sensitivity, I recommend a light meal 3-4 hours before your race with about 1-2g of carbs per kg of body weight. Stick to easily digestible options like white rice, toast with honey, or a low-fiber cereal. Avoid high-fiber, high-fat, and high-protein foods. In the final hour, you might try 30-40g of liquid carbs if you've tested this in training.`;
+      } else {
+        return `For pre-race nutrition, aim for 2-4g of carbs per kg of body weight in a meal 3-4 hours before your event. For ${sport}, good options include oatmeal with banana and honey, toast with jam, or a bagel with light toppings. In the 30-60 minutes before, you can top up with 30-60g of quick-release carbs like a sports drink or gel if you've practiced this in training.`;
+      }
+    }
+    
+    // Stomach issues
+    if (normalizedQuestion.includes('stomach') || normalizedQuestion.includes('gi issues') || normalizedQuestion.includes('gut problems')) {
+      if (avgSymptoms && Number(avgSymptoms) > 5) {
+        return `I see you've been experiencing significant gut symptoms (${avgSymptoms}/10 on average). To reduce these issues: 1) Start with liquid carbs like sports drinks, 2) Try multiple transportable carbs (glucose + fructose) in a 2:1 ratio, 3) Practice your race nutrition in training to adapt your gut, 4) Consider reducing fiber intake 24-48 hours before big sessions, 5) Try smaller, more frequent intake rather than large amounts at once. If symptoms persist, consider consulting with a sports dietitian.`;
+      } else {
+        return `For gut issues during exercise: 1) Train your gut by gradually increasing carb intake during training, 2) Start with easily digestible carbs like maltodextrin-based products, 3) Stay well hydrated, 4) Avoid high-fiber foods before exercise, 5) Try different carb sources to find what works for you, 6) Consider multiple transportable carbs (glucose + fructose) for better absorption, 7) Practice your race nutrition strategy in training.`;
+      }
+    }
+    
+    // Carb sources
+    if (normalizedQuestion.includes('carb sources') || normalizedQuestion.includes('best carbs') || normalizedQuestion.includes('what carbs')) {
+      if (giSensitivity === 'high') {
+        return `With your high GI sensitivity, focus on easily digestible carb sources: 1) Sports drinks with glucose/maltodextrin, 2) Isotonic gels (easier on the stomach), 3) White rice cakes, 4) Low-fiber energy bars, 5) Ripe bananas. Start with small amounts and gradually increase. Your target is ${targetCarbRate}g/hr, but build up to this gradually in training.`;
+      } else {
+        return `For ${sport}, especially during longer events, good carb sources include: 1) Sports drinks (60-80g carbs/liter), 2) Energy gels (20-30g carbs each), 3) Energy bars (25-40g carbs), 4) Bananas (~25g carbs), 5) Rice cakes, 6) Dates or dried fruit, 7) Honey sandwiches. For optimal absorption at your target rate of ${targetCarbRate}g/hr, consider using multiple transportable carbs (glucose + fructose) in a 2:1 ratio.`;
+      }
+    }
+    
+    // Bonking
+    if (normalizedQuestion.includes('bonk') || normalizedQuestion.includes('hitting the wall') || normalizedQuestion.includes('energy crash')) {
+      return `To avoid bonking (hitting the wall): 1) Start fueling early - within the first 30 minutes, 2) Aim for consistent intake of ${targetCarbRate}g of carbs per hour, 3) Don't wait until you feel hungry or tired, 4) Practice your nutrition strategy in training, 5) Carb-load 24-48 hours before long events, 6) Start with full glycogen stores (pre-event nutrition), 7) Consider caffeine for longer events (3-6mg/kg body weight), 8) Stay hydrated - dehydration accelerates glycogen depletion.`;
+    }
+    
+    // When to start fueling
+    if (normalizedQuestion.includes('when') && (normalizedQuestion.includes('start') || normalizedQuestion.includes('begin')) && (normalizedQuestion.includes('fuel') || normalizedQuestion.includes('eating') || normalizedQuestion.includes('nutrition'))) {
+      return `For optimal performance, start fueling early in your session - within the first 15-30 minutes. Don't wait until you feel hungry or low on energy. For sessions under 60-75 minutes, you may not need additional carbs if you're well-fueled beforehand. For longer sessions, begin with small amounts (15-30g) in the first 30 minutes, then aim for steady intake to reach your target of ${targetCarbRate}g/hr. This prevents glycogen depletion and maintains blood glucose levels throughout your session.`;
+    }
+    
+    // Default response with personalization
+    return `As your nutrition coach, I'd recommend focusing on consuming around ${targetCarbRate}g of carbs per hour during your ${sport} sessions. This is based on your personal assessment and training data. Remember that consistent practice with your race nutrition strategy is key to gut training. Is there a specific aspect of sports nutrition you'd like more detailed advice on?`;
+  };
+
+  // Input and chat styling
+  const inputStyle = {
+    width: '100%',
+    backgroundColor: '#334155',
+    border: '1px solid #475569',
+    borderRadius: '8px',
+    padding: '12px 16px',
+    color: '#ffffff',
+    fontSize: '16px',
+    outline: 'none'
+  };
+
   return (
-    <div style={{textAlign: 'center', padding: '2rem'}}>
-      <h1 style={{color: 'white', fontSize: '2rem'}}>AI Carb Coach</h1>
-      <p style={{color: '#a1a1aa', marginBottom: '2rem'}}>Coming soon</p>
-      <button 
-        onClick={onBack}
-        style={{
-          backgroundColor: '#475569',
-          color: 'white',
-          border: 'none',
-          padding: '0.75rem 1.5rem',
-          borderRadius: '0.5rem',
-          cursor: 'pointer'
-        }}
-      >
-        Back to Dashboard
-      </button>
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
+        <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
+      </div>
+
+      {/* Quick Questions */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {quickQuestions.map((question, index) => (
+          <button
+            key={index}
+            onClick={() => handleQuickQuestion(question)}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-full text-sm transition-colors"
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat Container */}
+      <div className="card mb-6 p-4 h-96 overflow-y-auto">
+        <div className="space-y-4">
+          {messages.map(message => (
+            <div 
+              key={message.id} 
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div 
+                className={`max-w-3/4 rounded-2xl px-4 py-3 ${
+                  message.type === 'user' 
+                    ? 'bg-orange-500 text-white rounded-tr-none' 
+                    : 'bg-slate-700 text-slate-200 rounded-tl-none'
+                }`}
+              >
+                <p>{message.text}</p>
+                <p className={`text-xs mt-1 ${
+                  message.type === 'user' ? 'text-orange-200' : 'text-slate-400'
+                }`}>
+                  {message.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Message Input */}
+      <form onSubmit={handleSendMessage} className="flex gap-2">
+        <input
+          type="text"
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          placeholder="Type your nutrition question..."
+          style={inputStyle}
+          className="flex-grow"
+        />
+        <button 
+          type="submit"
+          className="btn-primary px-6"
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+
+      {/* Back Button */}
+      <div className="mt-8 text-center">
+        <button 
+          onClick={onBack}
+          style={{
+            padding: '12px 24px',
+            backgroundColor: '#475569',
+            color: '#ffffff',
+            borderRadius: '8px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
     </div>
   );
 };
 
-export default AICarbCoach;
+// ============================================================================
+// PLACEHOLDER COMPONENTS (MODERN STYLING)
+// ============================================================================
+const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
+  <div className="max-w-4xl mx-auto">
+    <div className="card text-center">
+      <h1 className="text-4xl font-bold text-white mb-4">{title}</h1>
+      <p className="text-slate-400 text-xl mb-8">This feature is coming soon!</p>
+      <button onClick={onBack} className="btn-primary text-lg px-8 py-4">
+        Back to Dashboard
+      </button>
+    </div>
+  </div>
+);
+
+// ============================================================================
+// MAIN APP COMPONENT
+// ============================================================================
+
+const App: React.FC = () => {
+  // Manage current view for simple client-side navigation
+  const [currentView, setCurrentView] = useState<
+    'dashboard' |
+    'assessment' |
+    'logger' |
+    'progress' |
+    'event_planner' |
+    'ai_coach'
+  >('dashboard');
+
+  // Decide which component to render based on currentView
+  const renderContent = () => {
+    switch (currentView) {
+      case 'assessment':
+        return (
+          <Assessment
+            onBack={() => setCurrentView('dashboard')}
+            onComplete={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'logger':
+        return (
+          <SessionLogger
+            onBack={() => setCurrentView('dashboard')}
+            onSave={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'progress':
+        return (
+          <PlaceholderPage
+            title="Progress Charts"
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
+      case 'event_planner':
+        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
+      case 'ai_coach':
+        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
+      case 'dashboard':
+      default:
+        return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+      {renderContent()}
+    </div>
+  );
+};
+
+export default App;
+
+// 
