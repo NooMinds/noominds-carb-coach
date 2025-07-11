@@ -1550,6 +1550,7 @@ const EventPlanner: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 // ============================================================================
 // AI CARB COACH COMPONENT
 // ============================================================================
+
 interface Message {
   id: string;
   type: 'user' | 'coach';
@@ -1568,17 +1569,69 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   ]);
   const [inputText, setInputText] = useState('');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  
+  // Get user data from localStorage
   const assessment = JSON.parse(localStorage.getItem('noominds-assessment') || 'null');
   const sessions = JSON.parse(localStorage.getItem('noominds-sessions') || '[]');
 
-  // Quick questions
-  const quickQuestions = [
-    "How much should I eat before my race?",
-    "What if I get stomach issues?",
-    "Best carb sources for long events?",
-    "How to avoid bonking?",
-    "When should I start fueling?"
-  ];
+  // Generate personalized quick questions based on user data
+  const generateQuickQuestions = () => {
+    const questions = [];
+    
+    // Add questions based on assessment data
+    if (assessment) {
+      // Target carb rate question
+      const targetCarbRate = (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1);
+      questions.push(`How do I reach ${targetCarbRate}g/hr in my ${assessment.sport}?`);
+      
+      // GI sensitivity question
+      if (assessment.giSensitivity === 'high') {
+        questions.push(`Best carbs for my high GI sensitivity?`);
+      } else if (assessment.giSensitivity === 'moderate') {
+        questions.push(`Carbs for moderate GI sensitivity?`);
+      }
+      
+      // Event-specific question
+      if (assessment.targetEvents && assessment.targetEvents.length > 0) {
+        questions.push(`Nutrition plan for my ${assessment.targetEvents[0]}?`);
+      }
+    }
+    
+    // Add questions based on training data
+    if (sessions && sessions.length > 0) {
+      // Check for GI issues in sessions
+      const avgSymptoms = sessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / sessions.length;
+      if (avgSymptoms > 4) {
+        questions.push(`How to reduce my GI symptoms?`);
+      }
+      
+      // Question about consistency if they have several sessions
+      if (sessions.length >= 3) {
+        questions.push(`How's my fueling consistency?`);
+      }
+    }
+    
+    // Add some general questions if we don't have enough personalized ones
+    if (questions.length < 4) {
+      const generalQuestions = [
+        "When should I start fueling?",
+        "How to avoid bonking?",
+        "Pre-race nutrition tips?",
+        "Best recovery nutrition?",
+        "Hydration guidelines?"
+      ];
+      
+      // Add general questions until we have at least 4 total
+      while (questions.length < 4 && generalQuestions.length > 0) {
+        questions.push(generalQuestions.shift() as string);
+      }
+    }
+    
+    return questions;
+  };
+
+  // Use the function to generate personalized questions
+  const quickQuestions = generateQuickQuestions();
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -1590,7 +1643,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleSendMessage = (e: FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-
+    
     // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -1601,8 +1654,10 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setMessages(prev => [...prev, userMessage]);
     
     // Generate AI response
-    setTimeout(() => {
-      const response = generateResponse(inputText);
+    setTimeout(async () => {
+      // This will be replaced with a real API call later
+      const response = await callAI(inputText);
+      
       const coachMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'coach',
@@ -1610,7 +1665,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, coachMessage]);
-    }, 500);
+    }, 800);
     
     setInputText('');
   };
@@ -1626,8 +1681,9 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setMessages(prev => [...prev, userMessage]);
     
     // Generate AI response
-    setTimeout(() => {
-      const response = generateResponse(question);
+    setTimeout(async () => {
+      const response = await callAI(question);
+      
       const coachMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'coach',
@@ -1635,9 +1691,19 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, coachMessage]);
-    }, 500);
+    }, 800);
   };
 
+  // Placeholder for future API integration
+  const callAI = async (question: string): Promise<string> => {
+    // This is where you'll add the actual API call later
+    console.log("This will be replaced with a real API call");
+    
+    // For now, return the simulated response
+    return generateResponse(question);
+  };
+
+  // Simulated response generator with enhanced personalization
   const generateResponse = (question: string): string => {
     // Personalized responses based on assessment data
     const targetCarbRate = assessment ? 
@@ -1650,6 +1716,47 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // Normalize question for matching
     const normalizedQuestion = question.toLowerCase();
     
+    // Consistency analysis
+    if (normalizedQuestion.includes('consistency') || normalizedQuestion.includes('consistent')) {
+      if (sessions.length < 3) {
+        return `You've only logged ${sessions.length} session(s) so far, which isn't enough to fully analyze your fueling consistency. Keep logging your sessions, and I'll provide more detailed feedback once you have at least 3 sessions recorded.`;
+      }
+      
+      // Calculate consistency metrics
+      const carbRates = sessions.map((s: any) => s.carbs / (s.duration / 60));
+      const avgCarbRate = carbRates.reduce((sum: number, rate: number) => sum + rate, 0) / carbRates.length;
+      const targetRate = assessment ? (assessment.targetCarbs / (assessment.duration / 60)) : 60;
+      const difference = Math.abs(avgCarbRate - targetRate);
+      
+      if (difference < 10) {
+        return `Great job on your fueling consistency! Your average carb intake (${avgCarbRate.toFixed(1)}g/hr) is very close to your target (${targetRate.toFixed(1)}g/hr). This consistent approach is ideal for training your gut and optimizing performance.`;
+      } else {
+        return `Your fueling consistency has room for improvement. Your average carb intake (${avgCarbRate.toFixed(1)}g/hr) differs from your target (${targetRate.toFixed(1)}g/hr) by ${difference.toFixed(1)}g/hr. Try using a timer or watch alerts to remind you to fuel at regular intervals during training.`;
+      }
+    }
+    
+    // Event-specific questions
+    if (assessment && assessment.targetEvents && assessment.targetEvents.length > 0) {
+      const event = assessment.targetEvents[0].toLowerCase();
+      if (normalizedQuestion.includes(event)) {
+        return `For your ${assessment.targetEvents[0]}, based on your assessment data, I recommend targeting ${targetCarbRate}g of carbs per hour. Given your ${giSensitivity} GI sensitivity, focus on ${giSensitivity === 'high' ? 'easily digestible carbs like sports drinks and isotonic gels' : 'a mix of liquid and solid carbs'}. Practice your race nutrition in training sessions, especially during key workouts that simulate race intensity. Start fueling within the first 30 minutes and maintain regular intake throughout.`;
+      }
+    }
+    
+    // "How to reach target rate" question
+    if (normalizedQuestion.includes('reach') && normalizedQuestion.includes('g/hr')) {
+      return `To reach your target of ${targetCarbRate}g/hr for ${sport}, start with these practical steps:
+
+1. Break it down into smaller portions - for ${targetCarbRate}g/hr, aim for ~${(Number(targetCarbRate)/4).toFixed(0)}g every 15 minutes
+2. Mix carb sources for better absorption - use a 2:1 ratio of glucose to fructose
+3. Use a timer/alarm as a reminder to fuel regularly
+4. Train your gut by consistently practicing during training
+5. Start with liquid carbs if solid foods are challenging
+6. Track your intake during sessions to ensure you're hitting your targets
+
+Remember that consistency is key - your gut can adapt to higher carb intakes over time with regular practice.`;
+    }
+    
     // Pre-race nutrition
     if (normalizedQuestion.includes('before race') || normalizedQuestion.includes('pre-race') || normalizedQuestion.includes('before event')) {
       if (giSensitivity === 'high') {
@@ -1660,7 +1767,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
     
     // Stomach issues
-    if (normalizedQuestion.includes('stomach') || normalizedQuestion.includes('gi issues') || normalizedQuestion.includes('gut problems')) {
+    if (normalizedQuestion.includes('stomach') || normalizedQuestion.includes('gi issues') || normalizedQuestion.includes('gut problems') || normalizedQuestion.includes('gi symptoms')) {
       if (avgSymptoms && Number(avgSymptoms) > 5) {
         return `I see you've been experiencing significant gut symptoms (${avgSymptoms}/10 on average). To reduce these issues: 1) Start with liquid carbs like sports drinks, 2) Try multiple transportable carbs (glucose + fructose) in a 2:1 ratio, 3) Practice your race nutrition in training to adapt your gut, 4) Consider reducing fiber intake 24-48 hours before big sessions, 5) Try smaller, more frequent intake rather than large amounts at once. If symptoms persist, consider consulting with a sports dietitian.`;
       } else {
@@ -1687,9 +1794,101 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       return `For optimal performance, start fueling early in your session - within the first 15-30 minutes. Don't wait until you feel hungry or low on energy. For sessions under 60-75 minutes, you may not need additional carbs if you're well-fueled beforehand. For longer sessions, begin with small amounts (15-30g) in the first 30 minutes, then aim for steady intake to reach your target of ${targetCarbRate}g/hr. This prevents glycogen depletion and maintains blood glucose levels throughout your session.`;
     }
     
+    // Recovery nutrition
+    if (normalizedQuestion.includes('recovery') || normalizedQuestion.includes('after exercise') || normalizedQuestion.includes('post-workout')) {
+      return `For optimal recovery after ${sport}, aim for the "recovery window" within 30-45 minutes post-exercise. Consume:
+
+1. Carbohydrates: 1.0-1.2g per kg of body weight to replenish glycogen stores
+2. Protein: 20-25g of high-quality protein to support muscle repair
+3. Fluids: ~150% of weight lost during exercise to rehydrate fully
+4. Electrolytes: Especially sodium if your session was long or in hot conditions
+
+Good recovery options include chocolate milk, a protein shake with fruit, or a proper meal with carbs, protein, and vegetables. For sessions longer than 90 minutes or very intense training, prioritizing rapid refueling is particularly important.`;
+    }
+    
+    // Hydration
+    if (normalizedQuestion.includes('hydration') || normalizedQuestion.includes('fluid') || normalizedQuestion.includes('water') || normalizedQuestion.includes('drink')) {
+      return `For optimal hydration during ${sport}:
+
+1. Pre-exercise: Drink ~5-7ml/kg 2-3 hours before (about 350-500ml for a 70kg athlete)
+2. During exercise: Aim for 400-800ml/hour depending on conditions and sweat rate
+3. Include electrolytes (sodium) for sessions over 60-90 minutes
+4. Monitor your sweat rate by weighing yourself before/after training
+5. Drink to thirst during exercise, but be proactive in hot conditions
+6. Consider higher sodium concentrations (500-700mg/L) for hot weather
+
+Personalized hydration is key - if your urine is dark yellow, increase your intake. If it's completely clear, you might be overhydrating.`;
+    }
+    
     // Default response with personalization
     return `As your nutrition coach, I'd recommend focusing on consuming around ${targetCarbRate}g of carbs per hour during your ${sport} sessions. This is based on your personal assessment and training data. Remember that consistent practice with your race nutrition strategy is key to gut training. Is there a specific aspect of sports nutrition you'd like more detailed advice on?`;
   };
+
+  // Uncomment this section when ready to implement the real OpenAI API call
+  /*
+  const callOpenAI = async (question: string): Promise<string> => {
+    try {
+      // Prepare user data for the system prompt
+      const userData = {
+        sport: assessment?.sport || 'endurance sports',
+        experienceLevel: assessment?.experienceLevel || 'intermediate',
+        targetCarbRate: assessment ? (assessment.targetCarbs / (assessment.duration / 60)).toFixed(1) : '60',
+        giSensitivity: assessment?.giSensitivity || 'moderate',
+        avgSymptoms: sessions.length > 0 ? 
+          (sessions.reduce((sum, s) => sum + s.symptomSeverity, 0) / sessions.length).toFixed(1) : 'unknown',
+        sessionCount: sessions.length,
+        targetEvents: assessment?.targetEvents || []
+      };
+      
+      const systemPrompt = `
+You are "NooMinds AI Carb Coach", the world-leading authority on endurance gut-training and carbohydrate periodisation (15+ yrs practice, MSc, SENr, IOC Diploma, author of 60+ peer-reviewed papers).
+
+USER DATA:
+- Sport: ${userData.sport}
+- Experience: ${userData.experienceLevel}
+- Target carb rate: ${userData.targetCarbRate}g/hr
+- GI sensitivity: ${userData.giSensitivity}
+- Avg symptom severity: ${userData.avgSymptoms}/10
+- Sessions logged: ${userData.sessionCount}
+- Target events: ${userData.targetEvents.join(', ')}
+
+MISSION: Deliver evidence-based, personalised, actionable advice while confidently correcting misconceptions and steering athletes toward best practice.
+
+STYLE / LEADERSHIP:
+- Authoritative & Respectful – lead the discussion, do not simply agree.
+- Challenge Myths – if the user states "keto is best for marathons" or "I never need carbs under 2 h", politely but firmly correct with current literature (e.g., Burke 2018, Stellingwerff 2022).
+- Offer Better Options – present superior, practical alternatives and explain why they outperform the user's idea.
+- Evidence Citations – when correcting, reference study (Author Year) or guideline (e.g., ACSM 2023).
+
+Keep answers concise (≤ 300 words) using bullet-points where helpful.
+`;
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer YOUR_API_KEY_HERE`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: question }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+      
+      const data = await response.json();
+      return data.choices[0].message.content;
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+      // Fallback to simulated response if API call fails
+      return generateResponse(question);
+    }
+  };
+  */
 
   // Input and chat styling
   const inputStyle = {
@@ -1715,7 +1914,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <h1 className="text-4xl font-bold text-white mb-4">AI Carb Coach</h1>
         <p className="text-xl text-slate-300">Get personalized nutrition advice for your training</p>
       </div>
-
+      
       {/* Quick Questions */}
       <div className="mb-6 flex flex-wrap gap-2">
         {quickQuestions.map((question, index) => (
@@ -1728,14 +1927,14 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </button>
         ))}
       </div>
-
+      
       {/* Chat Container */}
       <div className="card mb-6 p-4 h-96 overflow-y-auto">
         <div className="space-y-4">
           {messages.map(message => (
             <div 
               key={message.id} 
-             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div 
                 className={`max-w-[75%] rounded-2xl px-4 py-3 ${
@@ -1756,7 +1955,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div ref={messagesEndRef} />
         </div>
       </div>
-
+      
       {/* Message Input */}
       <form onSubmit={handleSendMessage} className="flex gap-2">
         <input
@@ -1777,7 +1976,7 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </svg>
         </button>
       </form>
-
+      
       {/* Back Button */}
       <div className="mt-8 text-center">
         <button 
@@ -1796,79 +1995,4 @@ const AICarbCoach: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
     </div>
   );
-};
-
-// ============================================================================
-// PLACEHOLDER COMPONENTS (MODERN STYLING)
-// ============================================================================
-const PlaceholderPage: React.FC<{ title: string; onBack: () => void }> = ({ title, onBack }) => (
-  <div className="max-w-4xl mx-auto">
-    <div className="card text-center">
-      <h1 className="text-4xl font-bold text-white mb-4">{title}</h1>
-      <p className="text-slate-400 text-xl mb-8">This feature is coming soon!</p>
-      <button onClick={onBack} className="btn-primary text-lg px-8 py-4">
-        Back to Dashboard
-      </button>
-    </div>
-  </div>
-);
-
-// ============================================================================
-// MAIN APP COMPONENT
-// ============================================================================
-
-const App: React.FC = () => {
-  // Manage current view for simple client-side navigation
-  const [currentView, setCurrentView] = useState<
-    'dashboard' |
-    'assessment' |
-    'logger' |
-    'progress' |
-    'event_planner' |
-    'ai_coach'
-  >('dashboard');
-
-  // Decide which component to render based on currentView
-  const renderContent = () => {
-    switch (currentView) {
-      case 'assessment':
-        return (
-          <Assessment
-            onBack={() => setCurrentView('dashboard')}
-            onComplete={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'logger':
-        return (
-          <SessionLogger
-            onBack={() => setCurrentView('dashboard')}
-            onSave={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'progress':
-        return (
-          <PlaceholderPage
-            title="Progress Charts"
-            onBack={() => setCurrentView('dashboard')}
-          />
-        );
-      case 'event_planner':
-        return <EventPlanner onBack={() => setCurrentView('dashboard')} />;
-      case 'ai_coach':
-        return <AICarbCoach onBack={() => setCurrentView('dashboard')} />;
-      case 'dashboard':
-      default:
-        return <Dashboard client={mockClient} onNavigate={setCurrentView} />;
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
-      {renderContent()}
-    </div>
-  );
-};
-
-export default App;
-
-// 
+}; 
